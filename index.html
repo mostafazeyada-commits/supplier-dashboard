@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Balance Dashboard - April 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --blue: #2E5090;
+    --blue-light: #3A6EA5;
+    --accent: #D6E4F0;
+    --bg: #F0F2F5;
+    --card: #FFFFFF;
+    --green: #27AE60;
+    --red: #E74C3C;
+    --orange: #F39C12;
+    --gray: #7F8C8D;
+    --text: #2C3E50;
+    --text-light: #95A5A6;
+    --border: #E8EEF4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    color: #fff; padding: 28px 40px 22px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+  .header .sub { font-size: 13px; color: #B0C4DE; margin-top: 4px; }
+  .header .date-badge { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  /* Filter Cards */
+  .filter-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;
+  }
+  .filter-card {
+    background: var(--card); border-radius: 12px; padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .filter-card:nth-child(2) { border-top-color: var(--green); }
+  .filter-card:nth-child(3) { border-top-color: var(--orange); }
+  .filter-card:nth-child(4) { border-top-color: #8E44AD; }
+  .filter-card-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-light); display: flex; align-items: center; gap: 6px;
+  }
+  .filter-card-label .f-icon {
+    width: 18px; height: 18px; border-radius: 4px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  }
+  .filter-card:nth-child(1) .f-icon { background: var(--blue); }
+  .filter-card:nth-child(2) .f-icon { background: var(--green); }
+  .filter-card:nth-child(3) .f-icon { background: var(--orange); }
+  .filter-card:nth-child(4) .f-icon { background: #8E44AD; }
+  .filter-card select, .filter-card input {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: var(--text); font-weight: 600;
+    background: #FAFBFC; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .filter-card select:focus, .filter-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,80,144,0.1); }
+  .filter-card input::placeholder { font-weight: 400; color: var(--text-light); }
+  .filter-result {
+    background: var(--card); border-radius: 12px; padding: 12px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--blue);
+  }
+  .filter-result-text { font-size: 14px; color: var(--text-light); font-weight: 500; }
+  .filter-result-text span { color: var(--blue); font-size: 22px; font-weight: 700; }
+  .filter-result-tags { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .filter-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .filter-tag.t-group { background: #E8EEF4; color: var(--blue); }
+  .filter-tag.t-period { background: #E8F8EF; color: var(--green); }
+  .filter-tag.t-movement { background: #FEF3E2; color: #D68910; }
+  @media (max-width: 1024px) { .filter-row { grid-template-columns: 1fr 1fr; } }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--card); border-radius: 12px; padding: 20px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue); position: relative;
+  }
+  .kpi-card.negative { border-top-color: var(--red); }
+  .kpi-card.positive { border-top-color: var(--green); }
+  .kpi-card.neutral { border-top-color: var(--blue); }
+  .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .kpi-delta { margin-top: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta .period { font-weight: 400; color: var(--text-light); margin-left: 4px; }
+  .kpi-card.count-card { border-top-color: var(--orange); }
+  .kpi-card.count-card .kpi-value { color: var(--blue); }
+
+  /* Section */
+  .section-title {
+    font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--blue); margin: 28px 0 14px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { width: 20px; height: 20px; background: var(--blue); border-radius: 4px; display: inline-block; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--navy); margin-bottom: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--blue); color: #fff; padding: 10px 12px; text-align: left;
+    font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    cursor: pointer; user-select: none; position: relative;
+  }
+  th:first-child { border-radius: 6px 0 0 0; }
+  th:last-child { border-radius: 0 6px 0 0; }
+  th:hover { background: var(--blue-light); }
+  th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+  th.sorted .sort-arrow { opacity: 1; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  tr:last-child td { border-bottom: none; }
+  tr.total-row td { font-weight: 700; background: var(--accent) !important; border-top: 2px solid var(--blue-light); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .center { text-align: center; }
+  .positive-val { color: var(--green); font-weight: 600; }
+  .negative-val { color: var(--red); font-weight: 600; }
+  .neutral-val { color: var(--gray); }
+
+  /* Movement badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge.increase { background: #E8F8EF; color: var(--green); }
+  .badge.decrease { background: #FDEDED; color: var(--red); }
+  .badge.nochange { background: #F0F0F0; color: var(--gray); }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; height: 280px; margin-top: 8px; }
+  .chart-wrap-sm { position: relative; height: 220px; margin-top: 8px; }
+  .chart-wrap-lg { position: relative; height: 320px; margin-top: 8px; }
+
+  /* Rank number */
+  .rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--blue); font-weight: 700; font-size: 12px; }
+  .rank.top3 { background: var(--blue); color: #fff; }
+
+  /* Variance highlights */
+  .var-positive { background: #E8F8EF; color: var(--green); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .var-negative { background: #FDEDED; color: var(--red); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+
+  /* Vendor table container */
+  .vendor-table-wrap { max-height: 600px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+  .vendor-table-wrap::-webkit-scrollbar { width: 6px; }
+  .vendor-table-wrap::-webkit-scrollbar-thumb { background: var(--blue-light); border-radius: 3px; }
+  .vendor-table-wrap table th { position: sticky; top: 0; z-index: 2; }
+  .no-data { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 20px; color: var(--text-light); font-size: 12px; margin-top: 12px; }
+
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+    .filter-row, .filter-result { display: none; }
+    .header, th, .badge, .rank, .kpi-card { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+  @media (max-width: 1024px) {
+    .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .filter-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>SUPPLIER BALANCE (PAYABLE AMOUNT) DASHBOARD</h1>
+    <div class="sub">Talabat &mdash; Finance &amp; Accounts Payable</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filters -->
+  <div class="filter-row">
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">G</span> Supplier Group</div>
+      <select id="filterGroup">
+        <option value="All">All Groups</option>
+        <option value="Trading Supplier">Trading Supplier</option>
+        <option value="Non Trading">Non Trading</option>
+        <option value="Landlord">Landlord</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">P</span> Comparison Period</div>
+      <select id="filterMonth">
+        <option value="MA" selected>Mar &rarr; Apr</option>
+        <option value="FM">Feb &rarr; Mar</option>
+        <option value="JF">Jan &rarr; Feb</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">M</span> Movement Direction</div>
+      <select id="filterMovement">
+        <option value="All">All Movements</option>
+        <option value="Increase">Increase &#9650;</option>
+        <option value="Decrease">Decrease &#9660;</option>
+        <option value="No Change">No Change</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">S</span> Search Vendor</div>
+      <input type="text" id="searchVendor" placeholder="Type vendor name...">
+    </div>
+  </div>
+  <div class="filter-result" id="filterResultBar">
+    <div class="filter-result-text">Showing <span id="vendorCount">43</span> vendors</div>
+    <div class="filter-result-tags" id="filterTags"></div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card negative">
+      <div class="kpi-label">Total Vendor Balance</div>
+      <div class="kpi-value">-226.76M</div>
+      <div class="kpi-delta up">&#9650; +16.99M <span class="period">vs Mar'26</span></div>
+    </div>
+    <div class="kpi-card positive">
+      <div class="kpi-label">Total Inventory</div>
+      <div class="kpi-value">117.64M</div>
+      <div class="kpi-delta down">&#9660; -9.56M <span class="period">vs Mar'26</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Purchase</div>
+      <div class="kpi-value">117.54M</div>
+      <div class="kpi-delta down">&#9660; -41.23M <span class="period">vs Mar'26</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total COGs</div>
+      <div class="kpi-value">118.93M</div>
+      <div class="kpi-delta down">&#9660; -3.69M <span class="period">vs Mar'26</span></div>
+    </div>
+    <div class="kpi-card count-card">
+      <div class="kpi-label">Total Vendors</div>
+      <div class="kpi-value">772</div>
+      <div class="kpi-delta" style="color:var(--text-light);">Vendor Balance Comparing</div>
+    </div>
+  </div>
+
+  <!-- Variance Analysis Section -->
+  <div class="section-title"><span class="icon"></span> Month-over-Month Variance Analysis</div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title">MoM Variance &mdash; Amount (AED M)</div>
+      <div class="chart-wrap-lg"><canvas id="chartVarianceAmt"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">MoM Variance &mdash; Percentage (%)</div>
+      <div class="chart-wrap-lg"><canvas id="chartVariancePct"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vendor Balance Variance Waterfall</div>
+      <div class="chart-wrap-lg"><canvas id="chartWaterfall"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Variance Detail Table -->
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">Variance Summary &mdash; Amount (AED M)</div>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th class="num">Jan &rarr; Feb</th><th class="num">Feb &rarr; Mar</th><th class="num">Mar &rarr; Apr</th><th class="num">Cumulative (Jan&rarr;Apr)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vendor Balance</td>
+            <td class="num negative-val">-24.27M</td>
+            <td class="num negative-val">-32.24M</td>
+            <td class="num positive-val">+16.99M</td>
+            <td class="num negative-val">-39.53M</td>
+          </tr>
+          <tr>
+            <td>Inventory</td>
+            <td class="num positive-val">+8.04M</td>
+            <td class="num positive-val">+29.78M</td>
+            <td class="num negative-val">-9.56M</td>
+            <td class="num positive-val">+28.25M</td>
+          </tr>
+          <tr>
+            <td>Purchase</td>
+            <td class="num positive-val">+11.20M</td>
+            <td class="num positive-val">+27.46M</td>
+            <td class="num negative-val">-41.23M</td>
+            <td class="num negative-val">-2.57M</td>
+          </tr>
+          <tr>
+            <td>COGs</td>
+            <td class="num positive-val">+5.39M</td>
+            <td class="num positive-val">+5.87M</td>
+            <td class="num negative-val">-3.69M</td>
+            <td class="num positive-val">+7.57M</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Variance Summary &mdash; Percentage (%)</div>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th class="num">Jan &rarr; Feb</th><th class="num">Feb &rarr; Mar</th><th class="num">Mar &rarr; Apr</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vendor Balance</td>
+            <td class="num negative-val">-13.0%</td>
+            <td class="num negative-val">-15.2%</td>
+            <td class="num positive-val">+7.0%</td>
+          </tr>
+          <tr>
+            <td>Inventory</td>
+            <td class="num positive-val">+9.0%</td>
+            <td class="num positive-val">+30.6%</td>
+            <td class="num negative-val">-7.5%</td>
+          </tr>
+          <tr>
+            <td>Purchase</td>
+            <td class="num positive-val">+9.3%</td>
+            <td class="num positive-val">+20.9%</td>
+            <td class="num negative-val">-26.0%</td>
+          </tr>
+          <tr>
+            <td>COGs</td>
+            <td class="num positive-val">+4.8%</td>
+            <td class="num positive-val">+5.0%</td>
+            <td class="num negative-val">-3.0%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Monthly Trend Charts -->
+  <div class="section-title"><span class="icon"></span> Monthly Trend Analysis</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Vendor Balance Trend (AED)</div>
+      <div class="chart-wrap"><canvas id="chartVendorBal"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Inventory Trend (AED)</div>
+      <div class="chart-wrap"><canvas id="chartInventory"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">Purchase Trend (AED)</div>
+      <div class="chart-wrap"><canvas id="chartPurchase"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">COGs Trend (AED)</div>
+      <div class="chart-wrap"><canvas id="chartCogs"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Monthly Trend Tables -->
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">Vendor Balance &mdash; Monthly Detail</div>
+      <table>
+        <thead><tr><th>Month</th><th class="num">Balance</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
+        <tbody>
+          <tr><td>Jan'26</td><td class="num">-187.23M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+          <tr><td>Feb'26</td><td class="num">-211.51M</td><td class="num negative-val">-24.27M</td><td class="num negative-val">-13.0%</td></tr>
+          <tr><td>Mar'26</td><td class="num">-243.75M</td><td class="num negative-val">-32.24M</td><td class="num negative-val">-15.2%</td></tr>
+          <tr><td>Apr'26</td><td class="num">-226.76M</td><td class="num positive-val">+16.99M</td><td class="num positive-val">+7.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Inventory &mdash; Monthly Detail</div>
+      <table>
+        <thead><tr><th>Month</th><th class="num">Inventory</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
+        <tbody>
+          <tr><td>Jan'26</td><td class="num">89.39M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+          <tr><td>Feb'26</td><td class="num">97.42M</td><td class="num positive-val">+8.04M</td><td class="num positive-val">+9.0%</td></tr>
+          <tr><td>Mar'26</td><td class="num">127.20M</td><td class="num positive-val">+29.78M</td><td class="num positive-val">+30.6%</td></tr>
+          <tr><td>Apr'26</td><td class="num">117.64M</td><td class="num negative-val">-9.56M</td><td class="num negative-val">-7.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="card">
+      <div class="card-title">Purchase &mdash; Monthly Detail</div>
+      <table>
+        <thead><tr><th>Month</th><th class="num">Purchase</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
+        <tbody>
+          <tr><td>Jan'26</td><td class="num">120.11M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+          <tr><td>Feb'26</td><td class="num">131.31M</td><td class="num positive-val">+11.20M</td><td class="num positive-val">+9.3%</td></tr>
+          <tr><td>Mar'26</td><td class="num">158.78M</td><td class="num positive-val">+27.46M</td><td class="num positive-val">+20.9%</td></tr>
+          <tr><td>Apr'26</td><td class="num">117.54M</td><td class="num negative-val">-41.23M</td><td class="num negative-val">-26.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">COGs &mdash; Monthly Detail</div>
+      <table>
+        <thead><tr><th>Month</th><th class="num">COGs</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
+        <tbody>
+          <tr><td>Jan'26</td><td class="num">111.36M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
+          <tr><td>Feb'26</td><td class="num">116.75M</td><td class="num positive-val">+5.39M</td><td class="num positive-val">+4.8%</td></tr>
+          <tr><td>Mar'26</td><td class="num">122.62M</td><td class="num positive-val">+5.87M</td><td class="num positive-val">+5.0%</td></tr>
+          <tr><td>Apr'26</td><td class="num">118.93M</td><td class="num negative-val">-3.69M</td><td class="num negative-val">-3.0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Group Breakdown + Movement Analysis -->
+  <div class="section-title"><span class="icon"></span> Breakdown &amp; Movement Analysis</div>
+  <div style="margin-bottom:12px; display:flex; align-items:center; gap:14px;">
+    <div class="filter-card" style="flex:0 0 auto; padding:12px 18px; border-top:3px solid var(--orange); flex-direction:row; align-items:center; gap:12px;">
+      <div class="filter-card-label" style="margin:0;"><span class="f-icon" style="background:var(--orange);">P</span> Period</div>
+      <select id="breakdownPeriodFilter" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);font-weight:600;background:#FAFBFC;outline:none;min-width:150px;">
+        <option value="MA" selected>Mar &rarr; Apr</option>
+        <option value="FM">Feb &rarr; Mar</option>
+        <option value="JF">Jan &rarr; Feb</option>
+      </select>
+    </div>
+    <span id="breakdownPeriodTag" class="filter-tag t-movement" style="font-size:12px;padding:6px 14px;">Mar &rarr; Apr</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Balance Breakdown by Group &mdash; <span id="groupMonthLabel">Apr'26</span></div>
+      <div class="grid-2" style="gap:12px;">
+        <div>
+          <table>
+            <thead><tr><th>Group</th><th class="num">Vendor Bal.</th><th class="num">Inventory</th><th class="num">Purchase</th><th class="num">COGs</th></tr></thead>
+            <tbody id="groupBreakdownBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartGroup"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Movement Analysis (<span id="movementPeriodLabel">Mar &rarr; Apr</span>)</div>
+      <div class="grid-2" style="gap:12px;">
+        <div>
+          <table>
+            <thead><tr><th>Direction</th><th class="center">Vendor Bal.</th><th class="center">%</th><th class="center">Inventory</th><th class="center">%</th></tr></thead>
+            <tbody id="movementAnalysisBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartMovement"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Wise Comparison -->
+  <div class="section-title"><span class="icon"></span> Store Wise Comparison (Feb &rarr; Mar)</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Top 10 Stores by Inventory &mdash; Mar'26 (AED M)</div>
+      <div class="chart-wrap-lg"><canvas id="chartStoreInv"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top 10 Stores by COGs &mdash; Mar'26 (AED M)</div>
+      <div class="chart-wrap-lg"><canvas id="chartStoreCog"></canvas></div>
+    </div>
+  </div>
+  <div style="margin-top:16px; margin-bottom:12px; display:flex; align-items:center; gap:14px;">
+    <div class="filter-card" style="flex:0 0 auto; padding:12px 18px; border-top:3px solid var(--green); flex-direction:row; align-items:center; gap:12px;">
+      <div class="filter-card-label" style="margin:0;"><span class="f-icon" style="background:var(--green);">P</span> Store Period</div>
+      <select id="storePeriodFilter" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);font-weight:600;background:#FAFBFC;outline:none;min-width:150px;">
+        <option value="FM" selected>Feb &rarr; Mar</option>
+        <option value="JF">Jan &rarr; Feb</option>
+      </select>
+    </div>
+    <span id="storePeriodTag" class="filter-tag t-period" style="font-size:12px;padding:6px 14px;">Feb &rarr; Mar</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Store Movement &mdash; Inventory (<span id="storeInvPeriodLabel">Feb &rarr; Mar</span>)</div>
+      <div class="grid-2" style="gap:12px;">
+        <div>
+          <table>
+            <thead><tr><th>Direction</th><th class="center">Count</th><th class="center">%</th></tr></thead>
+            <tbody id="storeInvMovBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartStoreInvMov"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Store Movement &mdash; COGs (<span id="storeCogPeriodLabel">Feb &rarr; Mar</span>)</div>
+      <div class="grid-2" style="gap:12px;">
+        <div>
+          <table>
+            <thead><tr><th>Direction</th><th class="center">Count</th><th class="center">%</th></tr></thead>
+            <tbody id="storeCogMovBody"></tbody>
+          </table>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chartStoreCogMov"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px; padding-bottom:0;">
+    <div class="card-title">Store Detail &mdash; Inventory &amp; COGs (AED M)</div>
+    <div style="margin-bottom:12px;display:flex;gap:12px;align-items:center;">
+      <input type="text" id="searchStore" placeholder="Search store..." style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:#FAFBFC;min-width:240px;outline:none;">
+      <span style="font-size:13px;color:var(--text-light);font-weight:600;">Showing <span id="storeCount" style="color:var(--blue);font-size:18px;font-weight:700;">58</span> stores</span>
+    </div>
+    <div class="vendor-table-wrap">
+      <table id="storeTable">
+        <thead>
+          <tr>
+            <th class="center" style="width:36px" data-scol="rank"># <span class="sort-arrow">&#9650;</span></th>
+            <th data-scol="name">Store Name <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="invJ">Jan Inv <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="invF">Feb Inv <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="invM">Mar Inv <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="dInv">&Delta; Inv <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="cogJ">Jan COGs <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="cogF">Feb COGs <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="cogM">Mar COGs <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-scol="dCog">&Delta; COGs <span class="sort-arrow">&#9650;</span></th>
+            <th class="center" data-scol="mInv">Inv Mov <span class="sort-arrow">&#9650;</span></th>
+            <th class="center" data-scol="mCog">COGs Mov <span class="sort-arrow">&#9650;</span></th>
+          </tr>
+        </thead>
+        <tbody id="storeTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Vendor Detail Table (Filterable) -->
+  <div class="section-title"><span class="icon"></span> Vendor Detail &mdash; Filterable &amp; Sortable</div>
+  <div class="card" style="padding-bottom:0;">
+    <div class="card-title" id="vendorTableTitle">All Vendors &mdash; Vendor Balance (AED M) &mdash; Period: <span id="periodLabel">Mar &rarr; Apr</span></div>
+    <div class="vendor-table-wrap">
+      <table id="vendorTable">
+        <thead>
+          <tr>
+            <th class="center" style="width:36px" data-col="rank"># <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="name">Supplier Name <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="group">Group <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="jan">Jan'26 <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="feb">Feb'26 <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="mar">Mar'26 <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="apr">Apr'26 <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="varJF">&Delta; Jan&rarr;Feb <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="varFM">&Delta; Feb&rarr;Mar <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="varMA">&Delta; Mar&rarr;Apr <span class="sort-arrow">&#9650;</span></th>
+            <th class="center" data-col="mov">Movement <span class="sort-arrow">&#9650;</span></th>
+          </tr>
+        </thead>
+        <tbody id="vendorTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    Supplier Balance Dashboard &bull; Data Source: Vendor Balance Comparing &bull; Generated May 2026
+  </div>
+</div>
+
+<script>
+const months = ["Jan'26","Feb'26","Mar'26","Apr'26"];
+const fontFamily = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+
+// ===== VENDOR DATA =====
+// [name, group, vbJ, vbF, vbM, vbA, invJ, invF, invM, invA, purJ, purF, purM, purA, cogJ, cogF, cogM, cogA, movVB, movInv]
+const rawVendors = [
+["AL GURG UNILEVER LLC","Trading Supplier",-4.02,-3.33,-4.78,-5.79,2.72,1.89,3.19,3.15,2.77,1.69,4.38,3.03,1.57,1.76,2.19,1.98,"Increase","No Change"],
+["NESTLE UAE LLC","Trading Supplier",-2.77,-3.38,-5.43,-2.56,2.12,2.73,4.92,4.15,2.93,3.61,5.61,2.89,2.74,2.91,3.35,3.48,"Decrease","Decrease"],
+["ALPHAMED GENERAL TRADING LLC","Trading Supplier",-3.64,-4.14,-6.10,-5.88,4.06,4.60,6.03,5.95,2.08,3.15,4.17,2.73,2.60,2.59,2.75,2.58,"No Change","No Change"],
+["Gyma Food Industries LLC","Trading Supplier",-2.51,-2.85,-3.70,-3.62,1.89,1.73,2.43,3.21,1.47,2.07,2.56,2.23,1.52,2.12,1.82,1.45,"No Change","Increase"],
+["Admirals Trading LLC","Trading Supplier",-0.43,-0.79,-1.26,-1.30,0.22,0.44,0.87,0.75,0.28,0.64,0.86,0.42,0.43,0.40,0.43,0.51,"No Change","No Change"],
+["GULF TRADING & REFRIGERATING CO (GULFCO)","Trading Supplier",-1.25,-1.50,-1.73,-1.09,1.12,1.31,1.61,1.19,0.77,1.00,1.03,0.34,0.78,0.79,0.72,0.68,"Decrease","Decrease"],
+["W.J. Towell CO (LLC)","Trading Supplier",-1.09,-1.25,-1.67,-1.69,0.29,0.31,0.46,0.39,0.61,0.74,0.85,0.58,0.54,0.72,0.68,0.64,"No Change","No Change"],
+["Emirates Snack Foods (L.L.C)","Trading Supplier",-3.46,-4.17,-7.06,-7.37,1.74,2.15,4.72,4.31,2.42,3.26,5.85,3.59,3.08,2.75,3.18,3.81,"Increase","Decrease"],
+["Ghassan Ahmed Al Sulaiman Trading LLC","Trading Supplier",-0.47,-0.43,-0.37,-0.28,0.26,0.24,0.21,0.21,0.26,0.11,0.12,0.15,0.19,0.13,0.13,0.14,"No Change","No Change"],
+["UNITED FOODS CO. (PSC)","Trading Supplier",-0.24,-0.36,-0.47,-0.34,0.26,0.35,0.40,0.30,0.20,0.30,0.30,0.17,0.19,0.20,0.25,0.24,"No Change","No Change"],
+["FERGULF TRADING UAE L.L.C","Trading Supplier",-1.11,-1.51,-2.03,-1.97,0.22,0.44,0.74,0.51,0.65,0.97,1.21,0.89,0.54,0.57,0.73,0.87,"No Change","Decrease"],
+["Transmed Overseas Incorporated S.A.","Trading Supplier",-5.39,-5.73,-11.00,-5.36,6.21,6.01,10.95,9.75,6.39,7.20,12.53,6.38,7.56,7.14,7.33,7.45,"Decrease","Decrease"],
+["Modern Bakery LLC","Trading Supplier",-1.70,-1.59,-1.35,-1.33,0.29,0.06,0.05,0.05,0.99,0.77,0.75,0.75,0.86,0.66,0.69,0.71,"No Change","No Change"],
+["ARMADA DISTRIBUTION COMPANY LTD.","Trading Supplier",-1.99,-2.75,-2.41,-2.57,1.49,1.55,1.56,1.91,2.02,1.77,1.75,2.37,1.47,1.76,1.68,1.89,"No Change","Increase"],
+["Lebanese Fruits Co. (L.L.C)","Trading Supplier",-1.33,-1.57,-1.77,-1.58,0.79,0.76,1.17,1.08,0.99,0.73,1.18,0.57,0.70,0.76,0.73,0.66,"No Change","No Change"],
+["Gulf International (Food Division)","Trading Supplier",-0.85,-0.81,-0.96,-0.74,0.56,0.56,0.80,0.51,0.50,0.43,0.66,0.19,0.47,0.42,0.40,0.44,"No Change","Decrease"],
+["TRUEBELL MARKETING & TRADING","Trading Supplier",-1.08,-1.45,-2.32,-1.78,0.93,1.20,1.26,1.29,0.81,1.24,1.05,1.03,0.82,0.92,0.91,0.86,"Decrease","No Change"],
+["GALADARI ICE CREAM CO. LTD.","Trading Supplier",-0.30,-0.33,-0.53,-0.71,0.31,0.25,0.26,0.35,0.23,0.22,0.44,0.41,0.26,0.27,0.41,0.33,"No Change","No Change"],
+["Hassani Trading CO L.L.C","Trading Supplier",-1.60,-2.03,-2.47,-2.36,1.51,1.66,2.25,1.97,1.32,1.26,1.75,1.19,1.08,1.08,1.15,1.37,"No Change","Decrease"],
+["IFFCO Distribution Services FZCO","Trading Supplier",-2.49,-3.00,-2.66,-2.31,0.52,0.63,0.57,0.66,1.60,1.66,1.23,1.32,1.35,1.49,1.26,1.22,"Decrease","No Change"],
+["Middle East Trading Store LLC","Trading Supplier",-0.41,-0.40,-0.38,-0.28,0.21,0.15,0.23,0.16,0.25,0.18,0.23,0.07,0.18,0.23,0.14,0.15,"No Change","No Change"],
+["Unitra International LLC","Trading Supplier",-0.98,-1.33,-1.10,-1.66,0.51,0.64,0.46,0.65,1.19,1.36,1.13,1.62,1.30,1.22,1.31,1.35,"Increase","No Change"],
+["Qualpro Distribution LLC","Trading Supplier",-0.37,-0.42,-0.78,-0.71,0.17,0.22,0.47,0.40,0.17,0.30,0.55,0.23,0.23,0.25,0.29,0.28,"No Change","No Change"],
+["Al Safi Danone Co Ltd","Trading Supplier",-0.50,-0.71,-1.10,-0.94,0.16,0.21,0.43,0.33,0.30,0.51,0.73,0.31,0.24,0.44,0.46,0.35,"No Change","No Change"],
+["ARLA FOODS L.L.C","Trading Supplier",-3.62,-3.56,-4.77,-4.93,1.47,0.45,1.74,1.02,2.58,1.37,3.76,1.30,1.99,2.36,2.43,2.04,"No Change","Decrease"],
+["ALMARAI EMIRATES COMPANY L.L.C","Trading Supplier",-8.78,-9.62,-11.00,-11.36,0.48,0.36,0.75,0.75,5.09,5.36,6.55,5.63,4.89,5.44,6.07,5.58,"Increase","No Change"],
+["Federal Foods L L C","Trading Supplier",-1.14,-2.07,-3.35,-3.45,0.75,0.85,1.58,2.02,0.87,1.42,2.19,1.53,0.76,1.30,1.41,1.12,"No Change","Increase"],
+["COCA-COLA AL AHLIA BEVERAGES CO.","Trading Supplier",-3.08,-3.11,-3.33,-3.56,0.51,0.42,0.65,0.46,1.92,1.79,2.22,1.82,1.87,1.87,1.99,2.03,"No Change","No Change"],
+["Shankar Trading Co LLC","Trading Supplier",-0.54,-0.57,-0.53,-0.51,0.54,0.53,0.56,0.48,0.39,0.26,0.35,0.24,0.26,0.26,0.31,0.29,"No Change","No Change"],
+["Farm Fresh LLC","Trading Supplier",-2.26,-2.92,-2.21,-2.87,1.07,1.28,1.90,1.69,1.67,1.88,2.36,1.08,1.35,1.58,1.70,1.26,"Increase","Decrease"],
+["Gulf International (Johnson & Johnson)","Trading Supplier",-1.00,-0.97,-1.21,-1.18,0.83,0.80,1.09,0.84,0.77,0.64,1.04,0.50,0.67,0.65,0.76,0.74,"No Change","Decrease"],
+["Dubai Refreshment (PJSC)","Trading Supplier",-1.89,-1.60,-1.65,-1.27,0.23,0.21,0.38,0.24,0.94,0.89,0.98,0.76,0.88,0.82,0.86,0.86,"Decrease","No Change"],
+["BARAKAT VEGETABLES AND FRUITS CO.","Trading Supplier",-1.95,-2.16,-2.01,-1.57,0.06,0.06,0.04,0.04,1.39,1.32,1.20,0.77,0.93,1.27,0.80,0.91,"Decrease","No Change"],
+["Al Rashideen Trading","Trading Supplier",-0.47,-0.63,-0.59,-0.45,0.27,0.23,0.21,0.19,0.33,0.37,0.28,0.21,0.28,0.39,0.28,0.23,"No Change","No Change"],
+["Champions Food and Beverages Trading","Trading Supplier",-0.31,-0.38,-0.51,-0.40,0.20,0.26,0.31,0.16,0.17,0.28,0.33,0.15,0.22,0.21,0.27,0.27,"No Change","No Change"],
+["MARS GULF GENERAL TRADING LLC","Trading Supplier",-4.32,-4.64,-5.28,-5.31,2.73,2.90,3.80,3.50,2.99,2.57,3.50,2.60,2.74,2.31,2.53,2.83,"No Change","Decrease"],
+["AL SEER TRADING AGENCIES","Trading Supplier",-1.98,-2.86,-4.06,-3.64,1.53,1.79,3.03,2.92,1.57,2.12,2.98,1.50,1.95,1.87,1.85,1.66,"Decrease","No Change"],
+["ARABIAN OASIS FOOD CO","Trading Supplier",-0.70,-0.99,-1.65,-1.45,0.67,0.72,1.22,1.19,0.50,0.74,1.14,0.58,0.65,0.66,0.64,0.57,"No Change","No Change"],
+["Fine Fair Commercial Complex LLC","Trading Supplier",-1.08,-1.64,-2.87,-2.31,0.79,1.10,1.99,1.84,0.70,1.30,1.95,0.78,0.80,0.84,0.96,0.78,"Decrease","No Change"],
+["Al Ain Food & Beverages PJSC","Trading Supplier",-3.12,-3.80,-4.17,-3.79,0.34,0.28,0.67,0.50,2.22,2.21,2.64,1.68,2.19,2.25,2.27,1.85,"Decrease","No Change"],
+["Baqer Mohebi Enterprises LLC","Trading Supplier",-1.10,-1.01,-1.03,-1.07,0.45,0.42,0.58,0.58,0.73,0.63,0.73,0.45,0.65,0.66,0.57,0.44,"No Change","No Change"],
+["MILLENNIUM OPPORTUNITIES","Trading Supplier",-0.82,-0.96,-0.99,-1.20,0.57,0.55,0.52,0.58,0.64,0.46,0.65,0.68,0.49,0.48,0.67,0.59,"No Change","No Change"],
+["THE FRESH MARKET L.L.C","Trading Supplier",-7.13,-8.57,-10.00,-10.49,0,0,0,0,0,0,0,0,0,0,0,0,"Increase","No Change"],
+["Barakat Quality Plus LLC","Trading Supplier",-3.04,-3.07,-3.42,-3.87,0,0,0,0,0,0,0,0,0,0,0,0,"Increase","No Change"],
+["FALLEN LEAVES CONTRACTING LLC","Non Trading",-0.80,-0.80,-0.80,-0.80,0,0,0,0,0,0,0,0,0,0,0,0,"No Change","No Change"]
+];
+
+// Parse vendor data
+const vendors = rawVendors.map((r,i) => ({
+  name: r[0], group: r[1],
+  vb: [r[2],r[3],r[4],r[5]], inv: [r[6],r[7],r[8],r[9]],
+  pur: [r[10],r[11],r[12],r[13]], cog: [r[14],r[15],r[16],r[17]],
+  movVB: r[18], movInv: r[19]
+}));
+
+// ===== CHART SETUP =====
+const commonOptions = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#1B2A4A',
+      titleFont: { family: fontFamily, size: 12 },
+      bodyFont: { family: fontFamily, size: 12 },
+      padding: 10, cornerRadius: 8,
+      callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'M' }
+    }
+  },
+  scales: {
+    x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
+    y: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 11 }, callback: v => v.toFixed(0) + 'M' } }
+  }
+};
+
+function makeGradient(ctx, r, g, b) {
+  const grad = ctx.createLinearGradient(0, 0, 0, 260);
+  grad.addColorStop(0, `rgba(${r},${g},${b},0.25)`);
+  grad.addColorStop(1, `rgba(${r},${g},${b},0.02)`);
+  return grad;
+}
+
+// ===== VARIANCE CHARTS =====
+// Variance amounts
+const varAmts = {
+  vb: [-24.27, -32.24, 16.99],
+  inv: [8.04, 29.78, -9.56],
+  pur: [11.20, 27.46, -41.23],
+  cog: [5.39, 5.87, -3.69]
+};
+const varPcts = {
+  vb: [-13.0, -15.2, 7.0],
+  inv: [9.0, 30.6, -7.5],
+  pur: [9.3, 20.9, -26.0],
+  cog: [4.8, 5.0, -3.0]
+};
+const varLabels = ["Jan→Feb", "Feb→Mar", "Mar→Apr"];
+
+// Grouped bar: Variance Amount
+new Chart(document.getElementById('chartVarianceAmt'), {
+  type: 'bar',
+  data: {
+    labels: varLabels,
+    datasets: [
+      { label: 'Vendor Balance', data: varAmts.vb, backgroundColor: '#E74C3C', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'Inventory', data: varAmts.inv, backgroundColor: '#27AE60', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'Purchase', data: varAmts.pur, backgroundColor: '#3A6EA5', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'COGs', data: varAmts.cog, backgroundColor: '#F39C12', borderRadius: 4, barPercentage: 0.7 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + 'M' } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
+      y: {
+        grid: { color: '#F0F0F0' },
+        ticks: { font: { family: fontFamily, size: 11 }, callback: v => (v > 0 ? '+' : '') + v + 'M' }
+      }
+    }
+  }
+});
+
+// Line: Variance %
+new Chart(document.getElementById('chartVariancePct'), {
+  type: 'line',
+  data: {
+    labels: varLabels,
+    datasets: [
+      { label: 'Vendor Balance', data: varPcts.vb, borderColor: '#E74C3C', backgroundColor: 'rgba(231,76,60,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#E74C3C', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
+      { label: 'Inventory', data: varPcts.inv, borderColor: '#27AE60', backgroundColor: 'rgba(39,174,96,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#27AE60', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
+      { label: 'Purchase', data: varPcts.pur, borderColor: '#3A6EA5', backgroundColor: 'rgba(58,110,165,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#3A6EA5', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
+      { label: 'COGs', data: varPcts.cog, borderColor: '#F39C12', backgroundColor: 'rgba(243,156,18,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#F39C12', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(1) + '%' } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
+      y: {
+        grid: { color: '#F0F0F0' },
+        ticks: { font: { family: fontFamily, size: 11 }, callback: v => (v > 0 ? '+' : '') + v + '%' }
+      }
+    }
+  }
+});
+
+// Waterfall: Vendor Balance
+const wfData = [-187.23, -24.27, -32.24, 16.99, -226.76];
+const wfColors = wfData.map((v,i) => {
+  if (i === 0 || i === 4) return '#2E5090';
+  return v < 0 ? '#E74C3C' : '#27AE60';
+});
+const wfBases = [0, -187.23, -211.50, -243.75, 0];
+new Chart(document.getElementById('chartWaterfall'), {
+  type: 'bar',
+  data: {
+    labels: ["Jan'26", "Jan→Feb", "Feb→Mar", "Mar→Apr", "Apr'26"],
+    datasets: [
+      { label: 'Base', data: wfBases.map(v => Math.min(v, v + (wfData[wfBases.indexOf(v)] || 0))), backgroundColor: 'transparent', borderWidth: 0, barPercentage: 0.5 },
+      {
+        label: 'Change', data: wfData.map(v => Math.abs(v)),
+        backgroundColor: wfColors, borderRadius: 4, barPercentage: 0.5
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1B2A4A',
+        callbacks: { label: ctx => { if (ctx.datasetIndex === 0) return ''; const v = wfData[ctx.dataIndex]; return (v > 0 ? '+' : '') + v.toFixed(2) + 'M'; } }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
+      y: { stacked: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 11 }, callback: v => v.toFixed(0) + 'M' } }
+    }
+  }
+});
+
+// ===== TREND CHARTS =====
+const ctxVB = document.getElementById('chartVendorBal').getContext('2d');
+new Chart(ctxVB, {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [{ label: 'Vendor Balance', data: [-187.23,-211.51,-243.75,-226.76], borderColor: '#E74C3C', backgroundColor: makeGradient(ctxVB,231,76,60), borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#E74C3C', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: true }]
+  },
+  options: commonOptions
+});
+
+const ctxInv = document.getElementById('chartInventory').getContext('2d');
+new Chart(ctxInv, {
+  type: 'line',
+  data: {
+    labels: months,
+    datasets: [{ label: 'Inventory', data: [89.39,97.42,127.20,117.64], borderColor: '#27AE60', backgroundColor: makeGradient(ctxInv,39,174,96), borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#27AE60', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: true }]
+  },
+  options: commonOptions
+});
+
+const ctxP = document.getElementById('chartPurchase').getContext('2d');
+new Chart(ctxP, {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [{ label: 'Purchase', data: [120.11,131.31,158.78,117.54], backgroundColor: ['#3A6EA5','#3A6EA5','#3A6EA5','#2E5090'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
+  },
+  options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
+});
+
+const ctxC = document.getElementById('chartCogs').getContext('2d');
+new Chart(ctxC, {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [{ label: 'COGs', data: [111.36,116.75,122.62,118.93], backgroundColor: ['#F39C12','#F39C12','#F39C12','#E67E22'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
+  },
+  options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
+});
+
+// Group Doughnut (dynamic)
+const groupChart = new Chart(document.getElementById('chartGroup'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Trading Supplier','Non Trading','Landlord'],
+    datasets: [{ data: [0,0,0], backgroundColor: ['#2E5090','#3A6EA5','#D6E4F0'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toFixed(2) + 'M' } }
+    }
+  }
+});
+
+// Movement Doughnut (dynamic)
+const movementChart = new Chart(document.getElementById('chartMovement'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Increase','Decrease','No Change'],
+    datasets: [{ data: [0,0,0], backgroundColor: ['#27AE60','#E74C3C','#BDC3C7'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' vendors' } }
+    }
+  }
+});
+
+// Breakdown & Movement dynamic update
+const BD_THRESHOLD = 0.25;
+const bdPeriodLabels = { MA: "Mar → Apr", FM: "Feb → Mar", JF: "Jan → Feb" };
+const bdMonthLabels = { MA: "Apr'26", FM: "Mar'26", JF: "Feb'26" };
+const bdMonthIdx = { MA: 3, FM: 2, JF: 1 };
+const groups = ['Trading Supplier','Non Trading','Landlord'];
+
+// Precomputed group breakdown (full dataset)
+const groupData = {
+  JF: [
+    { vb: -200.02, inv: 92.42, pur: 124.68, cog: 110.60 },
+    { vb: -10.64, inv: 0.07, pur: 0.14, cog: 0.07 },
+    { vb: -0.85, inv: 0.00, pur: 0.00, cog: 0.00 }
+  ],
+  FM: [
+    { vb: -232.18, inv: 126.97, pur: 158.49, cog: 122.52 },
+    { vb: -10.72, inv: 0.10, pur: 0.16, cog: 0.09 },
+    { vb: -0.85, inv: 0.00, pur: 0.00, cog: 0.00 }
+  ],
+  MA: [
+    { vb: -217.35, inv: 117.42, pur: 117.27, cog: 118.83 },
+    { vb: -10.19, inv: 0.09, pur: 0.15, cog: 0.09 },
+    { vb: 0.85, inv: 0.00, pur: 0.00, cog: 0.00 }
+  ]
+};
+
+// Precomputed movement counts (full 772 vendors)
+const movementData = {
+  JF: { vb: { inc: 24, dec: 41, nc: 707 }, inv: { inc: 12, dec: 5, nc: 377 } },
+  FM: { vb: { inc: 18, dec: 50, nc: 704 }, inv: { inc: 25, dec: 4, nc: 365 } },
+  MA: { vb: { inc: 32, dec: 22, nc: 718 }, inv: { inc: 6, dec: 19, nc: 369 } }
+};
+
+function updateBreakdown() {
+  const period = document.getElementById('breakdownPeriodFilter').value;
+
+  document.getElementById('breakdownPeriodTag').textContent = bdPeriodLabels[period];
+  document.getElementById('groupMonthLabel').textContent = bdMonthLabels[period];
+  document.getElementById('movementPeriodLabel').textContent = bdPeriodLabels[period];
+
+  // Group breakdown from precomputed data
+  const gd = groupData[period];
+  const totals = { vb:0, inv:0, pur:0, cog:0 };
+  gd.forEach(g => { totals.vb+=g.vb; totals.inv+=g.inv; totals.pur+=g.pur; totals.cog+=g.cog; });
+
+  let gbHtml = '';
+  groups.forEach((g, i) => {
+    const t = gd[i];
+    gbHtml += '<tr><td>' + g + '</td>';
+    gbHtml += '<td class="num">' + t.vb.toFixed(2) + 'M</td>';
+    gbHtml += '<td class="num">' + t.inv.toFixed(2) + 'M</td>';
+    gbHtml += '<td class="num">' + t.pur.toFixed(2) + 'M</td>';
+    gbHtml += '<td class="num">' + t.cog.toFixed(2) + 'M</td></tr>';
+  });
+  gbHtml += '<tr class="total-row"><td>Total</td>';
+  gbHtml += '<td class="num">' + totals.vb.toFixed(2) + 'M</td>';
+  gbHtml += '<td class="num">' + totals.inv.toFixed(2) + 'M</td>';
+  gbHtml += '<td class="num">' + totals.pur.toFixed(2) + 'M</td>';
+  gbHtml += '<td class="num">' + totals.cog.toFixed(2) + 'M</td></tr>';
+  document.getElementById('groupBreakdownBody').innerHTML = gbHtml;
+
+  groupChart.data.datasets[0].data = gd.map(g => Math.abs(g.vb));
+  groupChart.update();
+
+  // Movement analysis from precomputed data
+  const md = movementData[period];
+  const vbTotal = md.vb.inc + md.vb.dec + md.vb.nc;
+  const invTotal = md.inv.inc + md.inv.dec + md.inv.nc;
+
+  let maHtml = '';
+  maHtml += '<tr><td><span class="badge increase">Increase &#9650;</span></td>';
+  maHtml += '<td class="center">' + md.vb.inc + '</td><td class="center">' + (md.vb.inc/vbTotal*100).toFixed(1) + '%</td>';
+  maHtml += '<td class="center">' + md.inv.inc + '</td><td class="center">' + (md.inv.inc/invTotal*100).toFixed(1) + '%</td></tr>';
+  maHtml += '<tr><td><span class="badge decrease">Decrease &#9660;</span></td>';
+  maHtml += '<td class="center">' + md.vb.dec + '</td><td class="center">' + (md.vb.dec/vbTotal*100).toFixed(1) + '%</td>';
+  maHtml += '<td class="center">' + md.inv.dec + '</td><td class="center">' + (md.inv.dec/invTotal*100).toFixed(1) + '%</td></tr>';
+  maHtml += '<tr><td><span class="badge nochange">No Change</span></td>';
+  maHtml += '<td class="center">' + md.vb.nc + '</td><td class="center">' + (md.vb.nc/vbTotal*100).toFixed(1) + '%</td>';
+  maHtml += '<td class="center">' + md.inv.nc + '</td><td class="center">' + (md.inv.nc/invTotal*100).toFixed(1) + '%</td></tr>';
+  maHtml += '<tr class="total-row"><td>Total</td>';
+  maHtml += '<td class="center">' + vbTotal + '</td><td class="center"></td>';
+  maHtml += '<td class="center">' + invTotal + '</td><td class="center"></td></tr>';
+  document.getElementById('movementAnalysisBody').innerHTML = maHtml;
+
+  movementChart.data.datasets[0].data = [md.vb.inc, md.vb.dec, md.vb.nc];
+  movementChart.update();
+}
+
+document.getElementById('breakdownPeriodFilter').addEventListener('change', updateBreakdown);
+updateBreakdown();
+
+// ===== VENDOR TABLE =====
+const periodLabels = { MA: "Mar → Apr", FM: "Feb → Mar", JF: "Jan → Feb" };
+const THRESHOLD = 0.25;
+let currentSort = { col: 'apr', dir: 'asc' };
+
+function calcMovement(v, period) {
+  const d = v.vb;
+  let delta;
+  if (period === 'JF') delta = d[1] - d[0];
+  else if (period === 'FM') delta = d[2] - d[1];
+  else delta = d[3] - d[2];
+  if (delta > THRESHOLD) return 'Increase';
+  if (delta < -THRESHOLD) return 'Decrease';
+  return 'No Change';
+}
+
+function fmtVar(v) {
+  if (v === 0) return '<span class="neutral-val">0.00M</span>';
+  const cls = v > 0 ? 'positive-val' : 'negative-val';
+  return '<span class="' + cls + '">' + (v > 0 ? '+' : '') + v.toFixed(2) + 'M</span>';
+}
+function movBadge(m) {
+  if (m === 'Increase') return '<span class="badge increase">Increase &#9650;</span>';
+  if (m === 'Decrease') return '<span class="badge decrease">Decrease &#9660;</span>';
+  return '<span class="badge nochange">No Change</span>';
+}
+
+function renderTable() {
+  const period = document.getElementById('filterMonth').value;
+  const group = document.getElementById('filterGroup').value;
+  const movement = document.getElementById('filterMovement').value;
+  const search = document.getElementById('searchVendor').value.toLowerCase();
+
+  document.getElementById('periodLabel').innerHTML = periodLabels[period];
+
+  // Update active filter tags
+  let tags = '';
+  tags += '<span class="filter-tag t-period">' + periodLabels[period] + '</span>';
+  if (group !== 'All') tags += '<span class="filter-tag t-group">' + group + '</span>';
+  if (movement !== 'All') tags += '<span class="filter-tag t-movement">' + movement + '</span>';
+  if (search) tags += '<span class="filter-tag t-group">Search: ' + search + '</span>';
+  document.getElementById('filterTags').innerHTML = tags;
+
+  let filtered = vendors.filter(v => {
+    if (group !== 'All' && !v.group.includes(group === 'Non Trading' ? 'Non Trading' : group)) return false;
+    if (movement !== 'All' && calcMovement(v, period) !== movement) return false;
+    if (search && !v.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Sort
+  const sc = currentSort.col;
+  const sd = currentSort.dir === 'asc' ? 1 : -1;
+  filtered.sort((a, b) => {
+    let va, vb2;
+    if (sc === 'name') { return a.name.localeCompare(b.name) * sd; }
+    if (sc === 'group') { return a.group.localeCompare(b.group) * sd; }
+    if (sc === 'mov') { return calcMovement(a, period).localeCompare(calcMovement(b, period)) * sd; }
+    const d = a.vb, d2 = b.vb;
+    if (sc === 'jan') { va = d[0]; vb2 = d2[0]; }
+    else if (sc === 'feb') { va = d[1]; vb2 = d2[1]; }
+    else if (sc === 'mar') { va = d[2]; vb2 = d2[2]; }
+    else if (sc === 'apr') { va = d[3]; vb2 = d2[3]; }
+    else if (sc === 'varJF') { va = d[1] - d[0]; vb2 = d2[1] - d2[0]; }
+    else if (sc === 'varFM') { va = d[2] - d[1]; vb2 = d2[2] - d2[1]; }
+    else if (sc === 'varMA') { va = d[3] - d[2]; vb2 = d2[3] - d2[2]; }
+    else { va = d[3]; vb2 = d2[3]; }
+    return (va - vb2) * sd;
+  });
+
+  document.getElementById('vendorCount').textContent = filtered.length;
+
+  const tbody = document.getElementById('vendorTbody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" class="no-data">No vendors match the selected filters.</td></tr>';
+    return;
+  }
+
+  let html = '';
+  filtered.forEach((v, i) => {
+    const d = v.vb;
+    const varJF = d[1] - d[0];
+    const varFM = d[2] - d[1];
+    const varMA = d[3] - d[2];
+    const mov = calcMovement(v, period);
+    const rank = i + 1;
+    const rankCls = rank <= 3 ? 'rank top3' : 'rank';
+    html += '<tr>';
+    html += '<td class="center"><span class="' + rankCls + '">' + rank + '</span></td>';
+    html += '<td>' + v.name + '</td>';
+    html += '<td>' + v.group + '</td>';
+    html += '<td class="num">' + d[0].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + d[1].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + d[2].toFixed(2) + 'M</td>';
+    html += '<td class="num" style="font-weight:700">' + d[3].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + fmtVar(varJF) + '</td>';
+    html += '<td class="num">' + fmtVar(varFM) + '</td>';
+    html += '<td class="num">' + fmtVar(varMA) + '</td>';
+    html += '<td class="center">' + movBadge(mov) + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+// Sort handler
+document.querySelectorAll('#vendorTable th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-col');
+    if (currentSort.col === col) {
+      currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      currentSort = { col, dir: 'asc' };
+    }
+    document.querySelectorAll('#vendorTable th').forEach(h => {
+      h.classList.remove('sorted');
+      const arrow = h.querySelector('.sort-arrow');
+      if (arrow) arrow.innerHTML = '&#9650;';
+    });
+    th.classList.add('sorted');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.innerHTML = currentSort.dir === 'asc' ? '&#9650;' : '&#9660;';
+    renderTable();
+  });
+});
+
+// Filter handlers
+document.getElementById('filterGroup').addEventListener('change', renderTable);
+document.getElementById('filterMonth').addEventListener('change', renderTable);
+document.getElementById('filterMovement').addEventListener('change', renderTable);
+document.getElementById('searchVendor').addEventListener('input', renderTable);
+
+// Initial render
+renderTable();
+
+// ===== STORE WISE COMPARISON =====
+// [name, invJ, invF, invM, cogJ, cogF, cogM, chgInv, chgCog]
+const rawStores = [
+["DIP Fresh Cross Dock",0.01,0.07,0.05,0.00,0.00,0.00,"No Change","No Change"],
+["F&V Warehouse_Ras Al Khor",0.18,0.50,0.10,0.00,0.00,0.00,"Decrease","No Change"],
+["Milk-Run-Store-Transfer",0.00,0.12,0.10,0.00,0.00,0.00,"No Change","No Change"],
+["UAE_Central_Warehouse",11.29,8.18,4.49,0.00,0.00,0.00,"Decrease","No Change"],
+["UAE_Dubai_DS_1 - Business Bay",0.58,0.59,0.64,3.30,3.36,2.98,"No Change","Decrease"],
+["UAE_Dubai_DS_11 - Silicon Oasis",0.94,0.94,0.94,2.12,2.20,2.17,"No Change","No Change"],
+["UAE_Dubai_DS_13 - Khalifa (Abu Dhabi)",0.93,0.85,0.88,2.92,3.01,3.00,"No Change","No Change"],
+["UAE_Dubai_DS_14 - Muwaileh Sharjah",1.17,1.17,1.23,3.59,3.82,3.66,"No Change","No Change"],
+["UAE_Dubai_DS_15_Khaldiya Tmart",0.58,0.57,0.63,2.78,2.92,2.89,"No Change","No Change"],
+["UAE_Dubai_DS_16_Al Jurf",0.92,0.91,0.88,2.36,2.47,2.53,"No Change","No Change"],
+["UAE_Dubai_DS_17 - Al Naseriya, Sharjah",1.42,1.39,1.32,1.51,1.58,1.77,"No Change","No Change"],
+["UAE_Dubai_DS_18 - Al Juwais, RAK",1.23,1.24,1.21,2.30,2.40,2.77,"No Change","Increase"],
+["UAE_Dubai_DS_19 - Al Tiwayyah, Al Ain",1.22,1.29,1.30,4.36,4.61,5.28,"No Change","Increase"],
+["UAE_Dubai_DS_21 - Shamkha, Abu Dhabi",1.49,1.47,1.42,6.50,6.72,7.12,"No Change","Increase"],
+["UAE_Dubai_DS_22 - Al Rahmanya",1.20,1.28,1.21,2.11,2.20,2.48,"No Change","No Change"],
+["UAE_Dubai_DS_24 - Al Riffa",0.83,0.85,0.84,2.13,2.22,2.57,"No Change","Increase"],
+["UAE_Dubai_DS_25- Barsha South",1.34,1.34,1.43,2.82,2.96,2.97,"No Change","No Change"],
+["UAE_Dubai_DS_26 - Al Ghubaiba",1.28,1.30,1.42,1.99,2.10,1.99,"No Change","No Change"],
+["UAE_Dubai_DS_27 - Al Hamidiya",0.93,0.86,0.84,2.99,3.10,3.26,"No Change","No Change"],
+["UAE_Dubai_DS_28 - Al Muqta",1.35,1.31,1.27,1.44,1.50,1.85,"No Change","Increase"],
+["UAE_Dubai_DS_29 - Zone One",1.33,1.28,1.26,2.92,3.01,2.96,"No Change","No Change"],
+["UAE_Dubai_DS_3 - Motor City",0.81,0.74,0.85,2.84,2.92,2.83,"No Change","No Change"],
+["UAE_Dubai_DS_32 - AD - Al Forsan",0.88,0.87,0.85,2.22,2.26,2.21,"No Change","No Change"],
+["UAE_Dubai_DS_34 - FUJ - Al Ghalelah",1.08,1.08,1.02,2.34,2.35,2.86,"No Change","Increase"],
+["UAE_Dubai_DS_35_Palm Jumeirah",1.11,1.13,1.20,3.02,3.02,2.27,"No Change","Decrease"],
+["UAE_Dubai_DS_36_Bahia",0.89,0.88,0.90,2.81,2.91,3.09,"No Change","No Change"],
+["UAE_Dubai_DS_37_AD-Baniyas",1.25,1.25,1.21,2.26,2.38,2.71,"No Change","Increase"],
+["UAE_Dubai_DS_38_Mussafah",1.49,1.48,1.49,3.11,3.31,3.18,"No Change","No Change"],
+["UAE_Dubai_DS_39_Jazira",1.40,1.39,1.52,4.94,5.27,5.43,"No Change","No Change"],
+["UAE_Dubai_DS_4 - Barsha 1",0.65,0.70,0.71,1.23,1.33,1.43,"No Change","No Change"],
+["UAE_Dubai_DS_40_Al Qouz",1.53,1.56,1.59,1.99,2.11,2.05,"No Change","No Change"],
+["UAE_Dubai_DS_41_Nad Al Hamar",1.40,1.44,1.44,2.05,2.08,2.11,"No Change","No Change"],
+["UAE_Dubai_DS_42-Uptown Mirdiff",0.97,1.02,1.07,4.16,4.23,4.08,"No Change","No Change"],
+["UAE_Dubai_DS_43-Qusais",1.42,1.49,1.42,2.23,2.37,2.62,"No Change","No Change"],
+["UAE_Dubai_DS_46-Dubai Silicon Oasis 2",1.22,1.20,1.27,2.44,2.76,2.91,"No Change","No Change"],
+["UAE_Dubai_DS_47-Dubai International City 2",1.35,1.33,1.34,2.38,2.53,2.77,"No Change","No Change"],
+["UAE_Dubai_DS_48-Furjan",0.00,0.90,1.00,0.00,0.18,1.47,"No Change","Increase"],
+["UAE_Dubai_DS_50 - Muteena",1.25,1.37,1.33,1.18,1.19,1.20,"No Change","No Change"],
+["UAE_Dubai_DS_52-Karama",0.00,1.26,1.28,0.00,0.62,1.43,"No Change","Increase"],
+["UAE_Dubai_DS_53 - Majaz",1.06,1.12,1.03,2.00,2.19,2.31,"No Change","No Change"],
+["UAE_Dubai_DS_54 - Khorfakkan",0.66,0.73,0.65,0.77,0.88,1.36,"No Change","Increase"],
+["UAE_Dubai_DS_57-Marina 2",0.86,0.91,0.96,1.44,1.44,0.94,"No Change","Decrease"],
+["UAE_Dubai_DS_58 - Yas Island",1.06,1.10,1.12,1.96,2.14,2.10,"No Change","No Change"],
+["UAE_Dubai_DS_59 - Jumeirah 2",1.13,1.27,1.25,2.03,1.75,1.33,"No Change","Decrease"],
+["UAE_Dubai_DS_6 - JVC",1.17,1.25,1.27,3.18,3.30,2.97,"No Change","Decrease"],
+["UAE_Dubai_DS_60 - Sanaya",1.25,1.32,1.24,3.79,3.94,3.99,"No Change","No Change"],
+["UAE_Dubai_DS_63 - Soyouh",1.30,1.32,1.30,2.92,3.10,3.49,"No Change","Increase"],
+["UAE_Dubai_DS_8 - Jumeira",1.09,1.11,1.13,1.14,1.06,0.90,"No Change","No Change"],
+["UAE_Dubai_DS_9 - Umm Suqeim",0.99,1.03,1.00,1.26,1.30,1.37,"No Change","No Change"],
+["UAE_Talabat_3pl_GSL_DIP",29.22,36.92,65.69,0.00,0.00,0.00,"Increase","No Change"],
+["UAE_Warehouse_Padel_Art",0.67,0.73,0.65,0.00,0.00,0.00,"No Change","No Change"],
+["UAE_Dubai_DS_49 - Khawaneej",0.00,0.00,1.09,0.00,0.00,0.59,"Increase","Increase"],
+["UAE_Dubai_DS_65-Dhahir Al Ain",0.00,0.00,0.97,0.00,0.00,0.12,"Increase","No Change"],
+["UAE_Dubai_DS_66-Aliyah Al Ain",0.00,0.00,0.89,0.00,0.00,0.38,"Increase","Increase"],
+["UAE_Dubai_DS_55 - Raha",0.00,0.00,0.83,0.00,0.00,0.02,"Increase","No Change"],
+["UAE_Dubai_DS_73-Falaj Hazza",0.00,0.00,0.60,0.00,0.00,0.32,"Increase","Increase"],
+["UAE_Dubai_DS_64 - Dibba",0.00,0.00,0.55,0.00,0.00,0.01,"Increase","No Change"]
+];
+
+const stores = rawStores.map(r => ({
+  name: r[0], inv: [r[1],r[2],r[3]], cog: [r[4],r[5],r[6]],
+  dInv: r[3]-r[2], dCog: r[6]-r[5], chgInv: r[7], chgCog: r[8]
+}));
+
+// Short store name for charts
+function shortName(n) { return n.replace(/^UAE_Dubai_/,'').replace(/^UAE_/,'').replace(/_/g,' '); }
+
+// Top 10 Stores by Inventory (Mar)
+const top10Inv = [...stores].sort((a,b) => b.inv[2] - a.inv[2]).slice(0,10);
+new Chart(document.getElementById('chartStoreInv'), {
+  type: 'bar',
+  data: {
+    labels: top10Inv.map(s => shortName(s.name)),
+    datasets: [
+      { label: "Jan'26", data: top10Inv.map(s => s.inv[0]), backgroundColor: '#D6E4F0', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Feb'26", data: top10Inv.map(s => s.inv[1]), backgroundColor: '#3A6EA5', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Mar'26", data: top10Inv.map(s => s.inv[2]), backgroundColor: '#1B2A4A', borderRadius: 3, barPercentage: 0.7 }
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 10 }, padding: 8, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
+    },
+    scales: {
+      x: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 10 }, callback: v => v + 'M' } },
+      y: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 10 } } }
+    }
+  }
+});
+
+// Top 10 Stores by COGs (Mar)
+const top10Cog = [...stores].sort((a,b) => b.cog[2] - a.cog[2]).slice(0,10);
+new Chart(document.getElementById('chartStoreCog'), {
+  type: 'bar',
+  data: {
+    labels: top10Cog.map(s => shortName(s.name)),
+    datasets: [
+      { label: "Jan'26", data: top10Cog.map(s => s.cog[0]), backgroundColor: '#FDEBD0', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Feb'26", data: top10Cog.map(s => s.cog[1]), backgroundColor: '#F39C12', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Mar'26", data: top10Cog.map(s => s.cog[2]), backgroundColor: '#E67E22', borderRadius: 3, barPercentage: 0.7 }
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 10 }, padding: 8, usePointStyle: true } },
+      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
+    },
+    scales: {
+      x: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 10 }, callback: v => v + 'M' } },
+      y: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 10 } } }
+    }
+  }
+});
+
+// Store Movement Analysis (dynamic by period)
+const STORE_THRESHOLD = 0.25;
+const storePeriodNames = { FM: 'Feb → Mar', JF: 'Jan → Feb' };
+
+function calcStoreMovement(s, metric, period) {
+  const d = s[metric];
+  let delta;
+  if (period === 'JF') delta = d[1] - d[0];
+  else delta = d[2] - d[1];
+  if (delta > STORE_THRESHOLD) return 'Increase';
+  if (delta < -STORE_THRESHOLD) return 'Decrease';
+  return 'No Change';
+}
+
+function countStoreMov(metric, period) {
+  let inc=0, dec=0, nc=0;
+  stores.forEach(s => {
+    const m = calcStoreMovement(s, metric, period);
+    if (m==='Increase') inc++; else if (m==='Decrease') dec++; else nc++;
+  });
+  return {inc, dec, nc, total: inc+dec+nc};
+}
+
+function renderStoreMov(tbodyId, m) {
+  const t = m.total;
+  document.getElementById(tbodyId).innerHTML =
+    '<tr><td><span class="badge increase">Increase &#9650;</span></td><td class="center">' + m.inc + '</td><td class="center">' + (m.inc/t*100).toFixed(1) + '%</td></tr>' +
+    '<tr><td><span class="badge decrease">Decrease &#9660;</span></td><td class="center">' + m.dec + '</td><td class="center">' + (m.dec/t*100).toFixed(1) + '%</td></tr>' +
+    '<tr><td><span class="badge nochange">No Change</span></td><td class="center">' + m.nc + '</td><td class="center">' + (m.nc/t*100).toFixed(1) + '%</td></tr>' +
+    '<tr class="total-row"><td>Total</td><td class="center">' + t + '</td><td class="center"></td></tr>';
+}
+
+const doughnutOpts = { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } }, tooltip: { backgroundColor: '#1B2A4A' } } };
+const storeInvChart = new Chart(document.getElementById('chartStoreInvMov'), {
+  type: 'doughnut',
+  data: { labels: ['Increase','Decrease','No Change'], datasets: [{ data: [0,0,0], backgroundColor: ['#27AE60','#E74C3C','#BDC3C7'], borderWidth: 2, borderColor: '#fff' }] },
+  options: doughnutOpts
+});
+const storeCogChart = new Chart(document.getElementById('chartStoreCogMov'), {
+  type: 'doughnut',
+  data: { labels: ['Increase','Decrease','No Change'], datasets: [{ data: [0,0,0], backgroundColor: ['#27AE60','#E74C3C','#BDC3C7'], borderWidth: 2, borderColor: '#fff' }] },
+  options: doughnutOpts
+});
+
+function updateStoreMovement() {
+  const period = document.getElementById('storePeriodFilter').value;
+  const label = storePeriodNames[period];
+  document.getElementById('storeInvPeriodLabel').textContent = label;
+  document.getElementById('storeCogPeriodLabel').textContent = label;
+  document.getElementById('storePeriodTag').textContent = label;
+
+  const invMov = countStoreMov('inv', period);
+  const cogMov = countStoreMov('cog', period);
+  renderStoreMov('storeInvMovBody', invMov);
+  renderStoreMov('storeCogMovBody', cogMov);
+
+  storeInvChart.data.datasets[0].data = [invMov.inc, invMov.dec, invMov.nc];
+  storeInvChart.update();
+  storeCogChart.data.datasets[0].data = [cogMov.inc, cogMov.dec, cogMov.nc];
+  storeCogChart.update();
+}
+
+document.getElementById('storePeriodFilter').addEventListener('change', updateStoreMovement);
+updateStoreMovement();
+
+// Store Table
+let storeSort = { col: 'invM', dir: 'desc' };
+
+function renderStoreTable() {
+  const search = document.getElementById('searchStore').value.toLowerCase();
+  let filtered = stores.filter(s => !search || s.name.toLowerCase().includes(search));
+
+  const sc = storeSort.col, sd = storeSort.dir === 'asc' ? 1 : -1;
+  filtered.sort((a,b) => {
+    if (sc === 'name') return a.name.localeCompare(b.name) * sd;
+    if (sc === 'mInv') return a.chgInv.localeCompare(b.chgInv) * sd;
+    if (sc === 'mCog') return a.chgCog.localeCompare(b.chgCog) * sd;
+    const map = { invJ:[0,'inv'], invF:[1,'inv'], invM:[2,'inv'], dInv:['d','inv'], cogJ:[0,'cog'], cogF:[1,'cog'], cogM:[2,'cog'], dCog:['d','cog'] };
+    const m = map[sc];
+    let va, vb2;
+    if (m[0]==='d') { va = a[m[1]==='inv'?'dInv':'dCog']; vb2 = b[m[1]==='inv'?'dInv':'dCog']; }
+    else { va = a[m[1]][m[0]]; vb2 = b[m[1]][m[0]]; }
+    return (va - vb2) * sd;
+  });
+
+  document.getElementById('storeCount').textContent = filtered.length;
+  const tbody = document.getElementById('storeTbody');
+  if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="12" class="no-data">No stores match.</td></tr>'; return; }
+
+  let html = '';
+  filtered.forEach((s, i) => {
+    const rank = i + 1;
+    const rc = rank <= 3 ? 'rank top3' : 'rank';
+    html += '<tr>';
+    html += '<td class="center"><span class="' + rc + '">' + rank + '</span></td>';
+    html += '<td>' + s.name + '</td>';
+    html += '<td class="num">' + s.inv[0].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + s.inv[1].toFixed(2) + 'M</td>';
+    html += '<td class="num" style="font-weight:700">' + s.inv[2].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + fmtVar(s.dInv) + '</td>';
+    html += '<td class="num">' + s.cog[0].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + s.cog[1].toFixed(2) + 'M</td>';
+    html += '<td class="num" style="font-weight:700">' + s.cog[2].toFixed(2) + 'M</td>';
+    html += '<td class="num">' + fmtVar(s.dCog) + '</td>';
+    html += '<td class="center">' + movBadge(s.chgInv) + '</td>';
+    html += '<td class="center">' + movBadge(s.chgCog) + '</td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+document.querySelectorAll('#storeTable th[data-scol]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-scol');
+    if (storeSort.col === col) storeSort.dir = storeSort.dir === 'asc' ? 'desc' : 'asc';
+    else storeSort = { col, dir: 'asc' };
+    document.querySelectorAll('#storeTable th').forEach(h => { h.classList.remove('sorted'); const a = h.querySelector('.sort-arrow'); if(a) a.innerHTML = '&#9650;'; });
+    th.classList.add('sorted');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.innerHTML = storeSort.dir === 'asc' ? '&#9650;' : '&#9660;';
+    renderStoreTable();
+  });
+});
+
+document.getElementById('searchStore').addEventListener('input', renderStoreTable);
+renderStoreTable();
+</script>
+</body>
+</html>
