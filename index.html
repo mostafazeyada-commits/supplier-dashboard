@@ -7,19 +7,19 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --navy: #1B2A4A;
-    --blue: #2E5090;
-    --blue-light: #3A6EA5;
-    --accent: #D6E4F0;
+    --navy: #313131;
+    --blue: #FF5A00;
+    --blue-light: #FF7A2E;
+    --accent: #FFF0E6;
     --bg: #F0F2F5;
     --card: #FFFFFF;
     --green: #27AE60;
     --red: #E74C3C;
-    --orange: #F39C12;
+    --orange: #FF5A00;
     --gray: #7F8C8D;
-    --text: #2C3E50;
+    --text: #313131;
     --text-light: #95A5A6;
-    --border: #E8EEF4;
+    --border: #F0E6DE;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -30,7 +30,7 @@
     display: flex; justify-content: space-between; align-items: flex-end;
   }
   .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
-  .header .sub { font-size: 13px; color: #B0C4DE; margin-top: 4px; }
+  .header .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
   .header .date-badge { background: rgba(255,255,255,0.15); padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; }
 
   .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
@@ -66,7 +66,7 @@
     font-size: 14px; font-family: inherit; color: var(--text); font-weight: 600;
     background: #FAFBFC; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .filter-card select:focus, .filter-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,80,144,0.1); }
+  .filter-card select:focus, .filter-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(255,90,0,0.1); }
   .filter-card input::placeholder { font-weight: 400; color: var(--text-light); }
   .filter-result {
     background: var(--card); border-radius: 12px; padding: 12px 22px;
@@ -81,7 +81,7 @@
     padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
     letter-spacing: 0.3px;
   }
-  .filter-tag.t-group { background: #E8EEF4; color: var(--blue); }
+  .filter-tag.t-group { background: #FFF0E6; color: var(--blue); }
   .filter-tag.t-period { background: #E8F8EF; color: var(--green); }
   .filter-tag.t-movement { background: #FEF3E2; color: #D68910; }
   .filter-tag.t-variance { background: #FDEDED; color: var(--red); }
@@ -193,6 +193,12 @@
   <div>
     <h1>SUPPLIER BALANCE (PAYABLE AMOUNT) DASHBOARD</h1>
     <div class="sub">Talabat &mdash; Finance &amp; Accounts Payable</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" style="height:36px;">
+      <rect width="160" height="40" rx="8" fill="rgba(255,255,255,0.15)"/>
+      <text x="80" y="27" text-anchor="middle" fill="#fff" font-family="'Segoe UI',Tahoma,sans-serif" font-size="20" font-weight="700" letter-spacing="2">talabat</text>
+    </svg>
   </div>
 </div>
 
@@ -661,7 +667,7 @@ const commonOptions = {
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: '#1B2A4A',
+      backgroundColor: '#313131',
       titleFont: { family: fontFamily, size: 12 },
       bodyFont: { family: fontFamily, size: 12 },
       padding: 10, cornerRadius: 8,
@@ -705,7 +711,7 @@ new Chart(document.getElementById('chartVarianceAmt'), {
     datasets: [
       { label: 'Vendor Balance', data: varAmts.vb, backgroundColor: '#E74C3C', borderRadius: 4, barPercentage: 0.7 },
       { label: 'Inventory', data: varAmts.inv, backgroundColor: '#27AE60', borderRadius: 4, barPercentage: 0.7 },
-      { label: 'Purchase', data: varAmts.pur, backgroundColor: '#3A6EA5', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'Purchase', data: varAmts.pur, backgroundColor: '#FF7A2E', borderRadius: 4, barPercentage: 0.7 },
       { label: 'COGs', data: varAmts.cog, backgroundColor: '#F39C12', borderRadius: 4, barPercentage: 0.7 }
     ]
   },
@@ -713,7 +719,7 @@ new Chart(document.getElementById('chartVarianceAmt'), {
     responsive: true, maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + 'M' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + 'M' } }
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
@@ -733,7 +739,7 @@ new Chart(document.getElementById('chartVariancePct'), {
     datasets: [
       { label: 'Vendor Balance', data: varPcts.vb, borderColor: '#E74C3C', backgroundColor: 'rgba(231,76,60,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#E74C3C', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
       { label: 'Inventory', data: varPcts.inv, borderColor: '#27AE60', backgroundColor: 'rgba(39,174,96,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#27AE60', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
-      { label: 'Purchase', data: varPcts.pur, borderColor: '#3A6EA5', backgroundColor: 'rgba(58,110,165,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#3A6EA5', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
+      { label: 'Purchase', data: varPcts.pur, borderColor: '#FF7A2E', backgroundColor: 'rgba(255,90,0,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#FF7A2E', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
       { label: 'COGs', data: varPcts.cog, borderColor: '#F39C12', backgroundColor: 'rgba(243,156,18,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#F39C12', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false }
     ]
   },
@@ -741,7 +747,7 @@ new Chart(document.getElementById('chartVariancePct'), {
     responsive: true, maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(1) + '%' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(1) + '%' } }
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
@@ -756,7 +762,7 @@ new Chart(document.getElementById('chartVariancePct'), {
 // Waterfall: Vendor Balance
 const wfData = [-187.23, -24.27, -32.24, 16.99, -226.76];
 const wfColors = wfData.map((v,i) => {
-  if (i === 0 || i === 4) return '#2E5090';
+  if (i === 0 || i === 4) return '#FF5A00';
   return v < 0 ? '#E74C3C' : '#27AE60';
 });
 const wfBases = [0, -187.23, -211.50, -243.75, 0];
@@ -777,7 +783,7 @@ new Chart(document.getElementById('chartWaterfall'), {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1B2A4A',
+        backgroundColor: '#313131',
         callbacks: { label: ctx => { if (ctx.datasetIndex === 0) return ''; const v = wfData[ctx.dataIndex]; return (v > 0 ? '+' : '') + v.toFixed(2) + 'M'; } }
       }
     },
@@ -814,7 +820,7 @@ new Chart(ctxP, {
   type: 'bar',
   data: {
     labels: months,
-    datasets: [{ label: 'Purchase', data: [120.11,131.31,158.78,117.54], backgroundColor: ['#3A6EA5','#3A6EA5','#3A6EA5','#2E5090'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
+    datasets: [{ label: 'Purchase', data: [120.11,131.31,158.78,117.54], backgroundColor: ['#FF7A2E','#FF7A2E','#FF7A2E','#FF5A00'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
   },
   options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
 });
@@ -824,7 +830,7 @@ new Chart(ctxC, {
   type: 'bar',
   data: {
     labels: months,
-    datasets: [{ label: 'COGs', data: [111.36,116.75,122.62,118.93], backgroundColor: ['#F39C12','#F39C12','#F39C12','#E67E22'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
+    datasets: [{ label: 'COGs', data: [111.36,116.75,122.62,118.93], backgroundColor: ['#F39C12','#F39C12','#F39C12','#E64D00'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
   },
   options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
 });
@@ -834,13 +840,13 @@ const groupChart = new Chart(document.getElementById('chartGroup'), {
   type: 'doughnut',
   data: {
     labels: ['Trading Supplier','Non Trading','Landlord'],
-    datasets: [{ data: [0,0,0], backgroundColor: ['#2E5090','#3A6EA5','#D6E4F0'], borderWidth: 2, borderColor: '#fff' }]
+    datasets: [{ data: [0,0,0], backgroundColor: ['#FF5A00','#FF7A2E','#FFF0E6'], borderWidth: 2, borderColor: '#fff' }]
   },
   options: {
     responsive: true, maintainAspectRatio: false, cutout: '60%',
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toFixed(2) + 'M' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toFixed(2) + 'M' } }
     }
   }
 });
@@ -856,7 +862,7 @@ const movementChart = new Chart(document.getElementById('chartMovement'), {
     responsive: true, maintainAspectRatio: false, cutout: '60%',
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' vendors' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' vendors' } }
     }
   }
 });
@@ -1187,16 +1193,16 @@ new Chart(document.getElementById('chartStoreInv'), {
   data: {
     labels: top10Inv.map(s => shortName(s.name)),
     datasets: [
-      { label: "Jan'26", data: top10Inv.map(s => s.inv[0]), backgroundColor: '#D6E4F0', borderRadius: 3, barPercentage: 0.7 },
-      { label: "Feb'26", data: top10Inv.map(s => s.inv[1]), backgroundColor: '#3A6EA5', borderRadius: 3, barPercentage: 0.7 },
-      { label: "Mar'26", data: top10Inv.map(s => s.inv[2]), backgroundColor: '#1B2A4A', borderRadius: 3, barPercentage: 0.7 }
+      { label: "Jan'26", data: top10Inv.map(s => s.inv[0]), backgroundColor: '#FFF0E6', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Feb'26", data: top10Inv.map(s => s.inv[1]), backgroundColor: '#FF7A2E', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Mar'26", data: top10Inv.map(s => s.inv[2]), backgroundColor: '#313131', borderRadius: 3, barPercentage: 0.7 }
     ]
   },
   options: {
     indexAxis: 'y', responsive: true, maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 10 }, padding: 8, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
     },
     scales: {
       x: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 10 }, callback: v => v + 'M' } },
@@ -1212,16 +1218,16 @@ new Chart(document.getElementById('chartStoreCog'), {
   data: {
     labels: top10Cog.map(s => shortName(s.name)),
     datasets: [
-      { label: "Jan'26", data: top10Cog.map(s => s.cog[0]), backgroundColor: '#FDEBD0', borderRadius: 3, barPercentage: 0.7 },
+      { label: "Jan'26", data: top10Cog.map(s => s.cog[0]), backgroundColor: '#FFF0E6', borderRadius: 3, barPercentage: 0.7 },
       { label: "Feb'26", data: top10Cog.map(s => s.cog[1]), backgroundColor: '#F39C12', borderRadius: 3, barPercentage: 0.7 },
-      { label: "Mar'26", data: top10Cog.map(s => s.cog[2]), backgroundColor: '#E67E22', borderRadius: 3, barPercentage: 0.7 }
+      { label: "Mar'26", data: top10Cog.map(s => s.cog[2]), backgroundColor: '#E64D00', borderRadius: 3, barPercentage: 0.7 }
     ]
   },
   options: {
     indexAxis: 'y', responsive: true, maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 10 }, padding: 8, usePointStyle: true } },
-      tooltip: { backgroundColor: '#1B2A4A', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.x.toFixed(2) + 'M' } }
     },
     scales: {
       x: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 10 }, callback: v => v + 'M' } },
@@ -1262,7 +1268,7 @@ function renderStoreMov(tbodyId, m) {
     '<tr class="total-row"><td>Total</td><td class="center">' + t + '</td><td class="center"></td></tr>';
 }
 
-const doughnutOpts = { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } }, tooltip: { backgroundColor: '#1B2A4A' } } };
+const doughnutOpts = { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 12, usePointStyle: true } }, tooltip: { backgroundColor: '#313131' } } };
 const storeInvChart = new Chart(document.getElementById('chartStoreInvMov'), {
   type: 'doughnut',
   data: { labels: ['Increase','Decrease','No Change'], datasets: [{ data: [0,0,0], backgroundColor: ['#27AE60','#E74C3C','#BDC3C7'], borderWidth: 2, borderColor: '#fff' }] },
