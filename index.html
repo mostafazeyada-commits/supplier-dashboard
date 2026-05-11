@@ -198,53 +198,6 @@
 
 <div class="container">
 
-  <!-- Filters -->
-  <div class="filter-row">
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">G</span> Supplier Group</div>
-      <select id="filterGroup">
-        <option value="All">All Groups</option>
-        <option value="Trading Supplier">Trading Supplier</option>
-        <option value="Non Trading">Non Trading</option>
-        <option value="Landlord">Landlord</option>
-      </select>
-    </div>
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">P</span> Comparison Period</div>
-      <select id="filterMonth">
-        <option value="MA" selected>Mar &rarr; Apr</option>
-        <option value="FM">Feb &rarr; Mar</option>
-        <option value="JF">Jan &rarr; Feb</option>
-      </select>
-    </div>
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">M</span> Movement Direction</div>
-      <select id="filterMovement">
-        <option value="All">All Movements</option>
-        <option value="Increase">Increase &#9650;</option>
-        <option value="Decrease">Decrease &#9660;</option>
-        <option value="No Change">No Change</option>
-      </select>
-    </div>
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">S</span> Search Vendor</div>
-      <input type="text" id="searchVendor" placeholder="Type vendor name...">
-    </div>
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">V</span> Top Variance</div>
-      <select id="filterTopVariance">
-        <option value="All">All Vendors</option>
-        <option value="10">Top 10</option>
-        <option value="20">Top 20</option>
-        <option value="50">Top 50</option>
-      </select>
-    </div>
-  </div>
-  <div class="filter-result" id="filterResultBar">
-    <div class="filter-result-text">Showing <span id="vendorCount">43</span> vendors</div>
-    <div class="filter-result-tags" id="filterTags"></div>
-  </div>
-
   <!-- KPI Cards -->
   <div class="kpi-row">
     <div class="kpi-card negative">
@@ -563,6 +516,51 @@
 
   <!-- Vendor Detail Table (Filterable) -->
   <div class="section-title"><span class="icon"></span> Vendor Detail &mdash; Filterable &amp; Sortable</div>
+  <div class="filter-row">
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">G</span> Supplier Group</div>
+      <select id="filterGroup">
+        <option value="All">All Groups</option>
+        <option value="Trading Supplier">Trading Supplier</option>
+        <option value="Non Trading">Non Trading</option>
+        <option value="Landlord">Landlord</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">P</span> Comparison Period</div>
+      <select id="filterMonth">
+        <option value="MA" selected>Mar &rarr; Apr</option>
+        <option value="FM">Feb &rarr; Mar</option>
+        <option value="JF">Jan &rarr; Feb</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">M</span> Movement Direction</div>
+      <select id="filterMovement">
+        <option value="All">All Movements</option>
+        <option value="Increase">Increase &#9650;</option>
+        <option value="Decrease">Decrease &#9660;</option>
+        <option value="No Change">No Change</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">S</span> Search Vendor</div>
+      <input type="text" id="searchVendor" placeholder="Type vendor name...">
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">V</span> Top Variance</div>
+      <select id="filterTopVariance">
+        <option value="All">All Vendors</option>
+        <option value="10">Top 10</option>
+        <option value="20">Top 20</option>
+        <option value="50">Top 50</option>
+      </select>
+    </div>
+  </div>
+  <div class="filter-result" id="filterResultBar">
+    <div class="filter-result-text">Showing <span id="vendorCount">43</span> vendors</div>
+    <div class="filter-result-tags" id="filterTags"></div>
+  </div>
   <div class="card" style="padding-bottom:0;">
     <div class="card-title" id="vendorTableTitle">All Vendors &mdash; Vendor Balance (AED M) &mdash; Period: <span id="periodLabel">Mar &rarr; Apr</span></div>
     <div class="vendor-table-wrap">
