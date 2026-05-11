@@ -37,7 +37,7 @@
 
   /* Filter Cards */
   .filter-row {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 20px;
   }
   .filter-card {
     background: var(--card); border-radius: 12px; padding: 16px 20px;
@@ -47,6 +47,7 @@
   .filter-card:nth-child(2) { border-top-color: var(--green); }
   .filter-card:nth-child(3) { border-top-color: var(--orange); }
   .filter-card:nth-child(4) { border-top-color: #8E44AD; }
+  .filter-card:nth-child(5) { border-top-color: var(--red); }
   .filter-card-label {
     font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
     color: var(--text-light); display: flex; align-items: center; gap: 6px;
@@ -59,6 +60,7 @@
   .filter-card:nth-child(2) .f-icon { background: var(--green); }
   .filter-card:nth-child(3) .f-icon { background: var(--orange); }
   .filter-card:nth-child(4) .f-icon { background: #8E44AD; }
+  .filter-card:nth-child(5) .f-icon { background: var(--red); }
   .filter-card select, .filter-card input {
     padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
     font-size: 14px; font-family: inherit; color: var(--text); font-weight: 600;
@@ -82,7 +84,9 @@
   .filter-tag.t-group { background: #E8EEF4; color: var(--blue); }
   .filter-tag.t-period { background: #E8F8EF; color: var(--green); }
   .filter-tag.t-movement { background: #FEF3E2; color: #D68910; }
-  @media (max-width: 1024px) { .filter-row { grid-template-columns: 1fr 1fr; } }
+  .filter-tag.t-variance { background: #FDEDED; color: var(--red); }
+  @media (max-width: 1200px) { .filter-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 768px) { .filter-row { grid-template-columns: 1fr 1fr; } }
 
   /* KPI Cards */
   .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -179,7 +183,7 @@
   @media (max-width: 1024px) {
     .kpi-row { grid-template-columns: repeat(3, 1fr); }
     .grid-2, .grid-3 { grid-template-columns: 1fr; }
-    .filter-row { grid-template-columns: 1fr 1fr; }
+    .filter-row { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
 </head>
@@ -225,6 +229,15 @@
     <div class="filter-card">
       <div class="filter-card-label"><span class="f-icon">S</span> Search Vendor</div>
       <input type="text" id="searchVendor" placeholder="Type vendor name...">
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">V</span> Top Variance</div>
+      <select id="filterTopVariance">
+        <option value="All">All Vendors</option>
+        <option value="10">Top 10</option>
+        <option value="20">Top 20</option>
+        <option value="50">Top 50</option>
+      </select>
     </div>
   </div>
   <div class="filter-result" id="filterResultBar">
@@ -567,6 +580,9 @@
             <th class="num" data-col="varFM">&Delta; Feb&rarr;Mar <span class="sort-arrow">&#9650;</span></th>
             <th class="num" data-col="varMA">&Delta; Mar&rarr;Apr <span class="sort-arrow">&#9650;</span></th>
             <th class="center" data-col="mov">Movement <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="dInv">&Delta; Inv <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="dPur">&Delta; Pur <span class="sort-arrow">&#9650;</span></th>
+            <th class="num" data-col="dCog">&Delta; COGS <span class="sort-arrow">&#9650;</span></th>
           </tr>
         </thead>
         <tbody id="vendorTbody"></tbody>
@@ -965,11 +981,18 @@ function movBadge(m) {
   return '<span class="badge nochange">No Change</span>';
 }
 
+function getVarForPeriod(arr, period) {
+  if (period === 'JF') return arr[1] - arr[0];
+  if (period === 'FM') return arr[2] - arr[1];
+  return arr[3] - arr[2];
+}
+
 function renderTable() {
   const period = document.getElementById('filterMonth').value;
   const group = document.getElementById('filterGroup').value;
   const movement = document.getElementById('filterMovement').value;
   const search = document.getElementById('searchVendor').value.toLowerCase();
+  const topVar = document.getElementById('filterTopVariance').value;
 
   document.getElementById('periodLabel').innerHTML = periodLabels[period];
 
@@ -979,6 +1002,7 @@ function renderTable() {
   if (group !== 'All') tags += '<span class="filter-tag t-group">' + group + '</span>';
   if (movement !== 'All') tags += '<span class="filter-tag t-movement">' + movement + '</span>';
   if (search) tags += '<span class="filter-tag t-group">Search: ' + search + '</span>';
+  if (topVar !== 'All') tags += '<span class="filter-tag t-variance">Top ' + topVar + ' Variance</span>';
   document.getElementById('filterTags').innerHTML = tags;
 
   let filtered = vendors.filter(v => {
@@ -987,6 +1011,12 @@ function renderTable() {
     if (search && !v.name.toLowerCase().includes(search)) return false;
     return true;
   });
+
+  // Top Variance filter — sort by absolute balance variance, then slice
+  if (topVar !== 'All') {
+    filtered.sort((a, b) => Math.abs(getVarForPeriod(b.vb, period)) - Math.abs(getVarForPeriod(a.vb, period)));
+    filtered = filtered.slice(0, parseInt(topVar));
+  }
 
   // Sort
   const sc = currentSort.col;
@@ -1004,6 +1034,9 @@ function renderTable() {
     else if (sc === 'varJF') { va = d[1] - d[0]; vb2 = d2[1] - d2[0]; }
     else if (sc === 'varFM') { va = d[2] - d[1]; vb2 = d2[2] - d2[1]; }
     else if (sc === 'varMA') { va = d[3] - d[2]; vb2 = d2[3] - d2[2]; }
+    else if (sc === 'dInv') { va = getVarForPeriod(a.inv, period); vb2 = getVarForPeriod(b.inv, period); }
+    else if (sc === 'dPur') { va = getVarForPeriod(a.pur, period); vb2 = getVarForPeriod(b.pur, period); }
+    else if (sc === 'dCog') { va = getVarForPeriod(a.cog, period); vb2 = getVarForPeriod(b.cog, period); }
     else { va = d[3]; vb2 = d2[3]; }
     return (va - vb2) * sd;
   });
@@ -1012,7 +1045,7 @@ function renderTable() {
 
   const tbody = document.getElementById('vendorTbody');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" class="no-data">No vendors match the selected filters.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="14" class="no-data">No vendors match the selected filters.</td></tr>';
     return;
   }
 
@@ -1023,6 +1056,9 @@ function renderTable() {
     const varFM = d[2] - d[1];
     const varMA = d[3] - d[2];
     const mov = calcMovement(v, period);
+    const dInv = getVarForPeriod(v.inv, period);
+    const dPur = getVarForPeriod(v.pur, period);
+    const dCog = getVarForPeriod(v.cog, period);
     const rank = i + 1;
     const rankCls = rank <= 3 ? 'rank top3' : 'rank';
     html += '<tr>';
@@ -1037,6 +1073,9 @@ function renderTable() {
     html += '<td class="num">' + fmtVar(varFM) + '</td>';
     html += '<td class="num">' + fmtVar(varMA) + '</td>';
     html += '<td class="center">' + movBadge(mov) + '</td>';
+    html += '<td class="num">' + fmtVar(dInv) + '</td>';
+    html += '<td class="num">' + fmtVar(dPur) + '</td>';
+    html += '<td class="num">' + fmtVar(dCog) + '</td>';
     html += '</tr>';
   });
   tbody.innerHTML = html;
@@ -1068,6 +1107,7 @@ document.getElementById('filterGroup').addEventListener('change', renderTable);
 document.getElementById('filterMonth').addEventListener('change', renderTable);
 document.getElementById('filterMovement').addEventListener('change', renderTable);
 document.getElementById('searchVendor').addEventListener('input', renderTable);
+document.getElementById('filterTopVariance').addEventListener('change', renderTable);
 
 // Initial render
 renderTable();
