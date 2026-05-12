@@ -250,16 +250,29 @@
   </div>
 </div>
 
-<!-- Category Distribution -->
+<!-- Category Distribution (Pie with Filter) -->
 <div class="section-title"><span class="icon"></span> Category Distribution</div>
+<div style="margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+  <div class="filter-card" style="flex:0 0 auto;padding:12px 18px;border-top:3px solid var(--blue);flex-direction:row;align-items:center;gap:12px;">
+    <div class="filter-card-label" style="margin:0;"><span class="f-icon" style="background:var(--blue);">P</span> Period</div>
+    <select id="pieMonthFilter" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);font-weight:600;background:#FAFBFC;outline:none;min-width:150px;">
+      <option value="All" selected>All Months</option>
+      <option value="Jan">January</option>
+      <option value="Feb">February</option>
+      <option value="Mar">March</option>
+      <option value="Apr">April</option>
+    </select>
+  </div>
+  <span id="piePeriodTag" class="filter-tag t-period" style="font-size:12px;padding:6px 14px;">All Months</span>
+</div>
 <div class="grid-2" style="margin-top:0;">
   <div class="card">
-    <div class="card-title">Inflow by Category</div>
-    <div class="chart-wrap-lg"><canvas id="chartDoughInflow"></canvas></div>
+    <div class="card-title" id="pieInflowTitle">Inflow by Category — All Months</div>
+    <div class="chart-wrap-lg"><canvas id="chartPieInflow"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Outflow by Category</div>
-    <div class="chart-wrap-lg"><canvas id="chartDoughOutflow"></canvas></div>
+    <div class="card-title" id="pieOutflowTitle">Outflow by Category — All Months</div>
+    <div class="chart-wrap-lg"><canvas id="chartPieOutflow"></canvas></div>
   </div>
 </div>
 
@@ -1002,12 +1015,38 @@ new Chart(document.getElementById("chartCatInflow"),{type:"bar",data:{labels:cat
 
 new Chart(document.getElementById("chartCatOutflow"),{type:"bar",data:{labels:catOutflowSorted.map(c=>c[0]),datasets:[{label:"Outflow (AED)",data:catOutflowSorted.map(c=>Math.abs(c[1])),backgroundColor:chartColors.coral,borderRadius:4}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}}});
 
-// Doughnut charts
-const doughColors=["#FF5A00","#FF7A2E","#FF9A5C","#FFC09F","#27AE60","#2ECC71","#3498DB","#E74C3C","#9B59B6","#F39C12","#1ABC9C","#E67E22","#34495E","#95A5A6","#D35400","#C0392B"];
+// Pie charts (filterable by month)
+const pieColors=["#FF5A00","#FF7A2E","#FF9A5C","#FFC09F","#27AE60","#2ECC71","#3498DB","#E74C3C","#9B59B6","#F39C12","#1ABC9C","#E67E22","#34495E","#95A5A6","#D35400","#C0392B"];
+const pieOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:function(ctx){const v=ctx.parsed;const total=ctx.dataset.data.reduce((a,b)=>a+b,0);const pct=total?((v/total)*100).toFixed(1):'0';return ctx.label+': '+fmtM(v)+' ('+pct+'%)';}}}}};
+let pieInflowChart=new Chart(document.getElementById("chartPieInflow"),{type:"pie",data:{labels:[],datasets:[{data:[],backgroundColor:[]}]},options:pieOpts});
+let pieOutflowChart=new Chart(document.getElementById("chartPieOutflow"),{type:"pie",data:{labels:[],datasets:[{data:[],backgroundColor:[]}]},options:pieOpts});
 
-new Chart(document.getElementById("chartDoughInflow"),{type:"doughnut",data:{labels:catInflowSorted.map(c=>c[0]),datasets:[{data:catInflowSorted.map(c=>c[1]),backgroundColor:doughColors.slice(0,catInflowSorted.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}}}}});
-
-new Chart(document.getElementById("chartDoughOutflow"),{type:"doughnut",data:{labels:catOutflowSorted.map(c=>c[0]),datasets:[{data:catOutflowSorted.map(c=>Math.abs(c[1])),backgroundColor:doughColors.slice(0,catOutflowSorted.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}}}}});
+function updatePieCharts(){
+  const mon=document.getElementById("pieMonthFilter").value;
+  const label=mon==="All"?"All Months":mon;
+  document.getElementById("piePeriodTag").textContent=label;
+  document.getElementById("pieInflowTitle").textContent="Inflow by Category — "+label;
+  document.getElementById("pieOutflowTitle").textContent="Outflow by Category — "+label;
+  const inf={},outf={};
+  RAW.forEach(r=>{
+    const debit=r[2]||0,credit=r[3]||0,cat=r[4],m=r[5];
+    if(mon!=="All"&&m!==mon)return;
+    if(debit>0)inf[cat]=(inf[cat]||0)+debit;
+    if(credit<0)outf[cat]=(outf[cat]||0)+Math.abs(credit);
+  });
+  const infSorted=Object.entries(inf).sort((a,b)=>b[1]-a[1]);
+  const outSorted=Object.entries(outf).sort((a,b)=>b[1]-a[1]);
+  pieInflowChart.data.labels=infSorted.map(c=>c[0]);
+  pieInflowChart.data.datasets[0].data=infSorted.map(c=>c[1]);
+  pieInflowChart.data.datasets[0].backgroundColor=pieColors.slice(0,infSorted.length);
+  pieInflowChart.update();
+  pieOutflowChart.data.labels=outSorted.map(c=>c[0]);
+  pieOutflowChart.data.datasets[0].data=outSorted.map(c=>c[1]);
+  pieOutflowChart.data.datasets[0].backgroundColor=pieColors.slice(0,outSorted.length);
+  pieOutflowChart.update();
+}
+document.getElementById("pieMonthFilter").addEventListener("change",updatePieCharts);
+updatePieCharts();
 
 // === HEATMAP TABLE ===
 (function(){
