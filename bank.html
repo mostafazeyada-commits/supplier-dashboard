@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bank Transaction Dashboard - 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #313131;
+    --blue: #FF5A00;
+    --blue-light: #FF7A2E;
+    --accent: #FFF0E6;
+    --bg: #F0F2F5;
+    --card: #FFFFFF;
+    --green: #27AE60;
+    --red: #E74C3C;
+    --orange: #FF5A00;
+    --gray: #7F8C8D;
+    --text: #313131;
+    --text-light: #95A5A6;
+    --border: #F0E6DE;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Top Nav */
+  .top-nav {
+    background: var(--navy); display: flex; align-items: center; padding: 0 24px; gap: 0;
+  }
+  .top-nav a {
+    color: #fff; text-decoration: none; padding: 10px 24px; font-size: 14px; font-weight: 600;
+    border-bottom: 3px solid transparent; transition: border-color 0.2s;
+  }
+  .top-nav a:hover { border-bottom-color: rgba(255,90,0,0.5); }
+  .top-nav a.active { border-bottom-color: var(--orange); }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    color: #fff; padding: 28px 40px 22px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+  .header .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  /* Filter Cards */
+  .filter-row {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 20px;
+  }
+  .filter-card {
+    background: var(--card); border-radius: 12px; padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .filter-card:nth-child(2) { border-top-color: var(--green); }
+  .filter-card:nth-child(3) { border-top-color: var(--orange); }
+  .filter-card:nth-child(4) { border-top-color: #8E44AD; }
+  .filter-card:nth-child(5) { border-top-color: var(--red); }
+  .filter-card-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-light); display: flex; align-items: center; gap: 6px;
+  }
+  .filter-card-label .f-icon {
+    width: 18px; height: 18px; border-radius: 4px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  }
+  .filter-card:nth-child(1) .f-icon { background: var(--blue); }
+  .filter-card:nth-child(2) .f-icon { background: var(--green); }
+  .filter-card:nth-child(3) .f-icon { background: var(--orange); }
+  .filter-card:nth-child(4) .f-icon { background: #8E44AD; }
+  .filter-card:nth-child(5) .f-icon { background: var(--red); }
+  .filter-card select, .filter-card input {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: var(--text); font-weight: 600;
+    background: #FAFBFC; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .filter-card select:focus, .filter-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(255,90,0,0.1); }
+  .filter-card input::placeholder { font-weight: 400; color: var(--text-light); }
+  .filter-result {
+    background: var(--card); border-radius: 12px; padding: 12px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; border-left: 4px solid var(--blue);
+  }
+  .filter-result-text { font-size: 14px; color: var(--text-light); font-weight: 500; }
+  .filter-result-text span { color: var(--blue); font-size: 22px; font-weight: 700; }
+  .filter-result-tags { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+  .filter-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .filter-tag.t-group { background: #FFF0E6; color: var(--blue); }
+  .filter-tag.t-period { background: #E8F8EF; color: var(--green); }
+  .filter-tag.t-movement { background: #FEF3E2; color: #D68910; }
+  .filter-tag.t-variance { background: #FDEDED; color: var(--red); }
+  @media (max-width: 1200px) { .filter-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 768px) { .filter-row { grid-template-columns: 1fr 1fr; } }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--card); border-radius: 12px; padding: 20px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue); position: relative;
+  }
+  .kpi-card.negative { border-top-color: var(--red); }
+  .kpi-card.positive { border-top-color: var(--green); }
+  .kpi-card.neutral { border-top-color: var(--blue); }
+  .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .kpi-delta { margin-top: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta .period { font-weight: 400; color: var(--text-light); margin-left: 4px; }
+  .kpi-card.count-card { border-top-color: var(--orange); }
+  .kpi-card.count-card .kpi-value { color: var(--blue); }
+
+  /* Section */
+  .section-title {
+    font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--blue); margin: 28px 0 14px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { width: 20px; height: 20px; background: var(--blue); border-radius: 4px; display: inline-block; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--navy); margin-bottom: 16px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--blue); color: #fff; padding: 10px 12px; text-align: left;
+    font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    cursor: pointer; user-select: none; position: relative;
+  }
+  th:first-child { border-radius: 6px 0 0 0; }
+  th:last-child { border-radius: 0 6px 0 0; }
+  th:hover { background: var(--blue-light); }
+  th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+  th.sorted .sort-arrow { opacity: 1; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  tr:last-child td { border-bottom: none; }
+  tr.total-row td { font-weight: 700; background: var(--accent) !important; border-top: 2px solid var(--blue-light); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .center { text-align: center; }
+  .positive-val { color: var(--green); font-weight: 600; }
+  .negative-val { color: var(--red); font-weight: 600; }
+  .neutral-val { color: var(--gray); }
+
+  /* Movement badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge.increase { background: #E8F8EF; color: var(--green); }
+  .badge.decrease { background: #FDEDED; color: var(--red); }
+  .badge.nochange { background: #F0F0F0; color: var(--gray); }
+
+  /* Chart containers */
+  .chart-wrap { position: relative; height: 280px; margin-top: 8px; }
+  .chart-wrap-sm { position: relative; height: 220px; margin-top: 8px; }
+  .chart-wrap-lg { position: relative; height: 320px; margin-top: 8px; }
+
+  /* Rank number */
+  .rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--blue); font-weight: 700; font-size: 12px; }
+  .rank.top3 { background: var(--blue); color: #fff; }
+
+  /* Variance highlights */
+  .var-positive { background: #E8F8EF; color: var(--green); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .var-negative { background: #FDEDED; color: var(--red); padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+
+  /* Vendor table container */
+  .vendor-table-wrap { max-height: 600px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+  .vendor-table-wrap::-webkit-scrollbar { width: 6px; }
+  .vendor-table-wrap::-webkit-scrollbar-thumb { background: var(--blue-light); border-radius: 3px; }
+  .vendor-table-wrap table th { position: sticky; top: 0; z-index: 2; }
+  .no-data { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; }
+
+  /* Heatmap table */
+  .heatmap-table td { text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; padding: 8px 10px; }
+  .heatmap-table th { font-size: 10px; padding: 8px 10px; }
+  .heatmap-table .cat-cell { text-align: left; font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .heatmap-inflow { background: #E8F8EF !important; color: var(--green); font-weight: 600; }
+  .heatmap-outflow { background: #FDEDED !important; color: var(--red); font-weight: 600; }
+  .heatmap-zero { color: var(--text-light); }
+
+  /* Footer */
+  .footer { text-align: center; padding: 20px; color: var(--text-light); font-size: 12px; margin-top: 12px; }
+
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+    .filter-row, .filter-result { display: none; }
+    .header, th, .badge, .rank, .kpi-card { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+  @media (max-width: 1024px) {
+    .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .filter-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <a href="index.html">Supplier Balance</a>
+  <a href="bank.html" class="active">Bank Transactions</a>
+</div>
+
+<div class="header">
+  <div>
+    <h1>BANK TRANSACTION DASHBOARD</h1>
+    <div class="sub">Talabat &mdash; Finance &amp; Accounts Payable</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" style="height:36px;">
+      <rect width="160" height="40" rx="8" fill="rgba(255,255,255,0.15)"/>
+      <text x="80" y="27" text-anchor="middle" fill="#fff" font-family="'Segoe UI',Tahoma,sans-serif" font-size="20" font-weight="700" letter-spacing="2">talabat</text>
+    </svg>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- KPI Cards (rendered by JS) -->
+<div class="kpi-row" id="kpiRow"></div>
+
+<!-- Monthly Cash Flow Chart -->
+<div class="section-title"><span class="icon"></span> Monthly Cash Flow</div>
+<div class="card">
+  <div class="card-title">Monthly Inflow vs Outflow (AED)</div>
+  <div class="chart-wrap-lg"><canvas id="chartMonthlyCF"></canvas></div>
+</div>
+
+<!-- Category Breakdown -->
+<div class="section-title"><span class="icon"></span> Category Breakdown</div>
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Top Inflow Categories (AED)</div>
+    <div class="chart-wrap-lg"><canvas id="chartCatInflow"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Top Outflow Categories (AED)</div>
+    <div class="chart-wrap-lg"><canvas id="chartCatOutflow"></canvas></div>
+  </div>
+</div>
+
+<!-- Category Distribution -->
+<div class="section-title"><span class="icon"></span> Category Distribution</div>
+<div class="grid-2" style="margin-top:0;">
+  <div class="card">
+    <div class="card-title">Inflow by Category</div>
+    <div class="chart-wrap-lg"><canvas id="chartDoughInflow"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Outflow by Category</div>
+    <div class="chart-wrap-lg"><canvas id="chartDoughOutflow"></canvas></div>
+  </div>
+</div>
+
+<!-- Monthly Category Table -->
+<div class="section-title"><span class="icon"></span> Monthly Category Heatmap</div>
+<div class="card">
+  <div class="vendor-table-wrap" style="max-height:none;">
+    <table class="heatmap-table" id="heatmapTable"></table>
+  </div>
+</div>
+
+<!-- Transaction Detail Table -->
+<div class="section-title"><span class="icon"></span> Transaction Details</div>
+<div class="filter-row" id="txnFilters">
+  <div class="filter-card">
+    <div class="filter-card-label"><span class="f-icon">&#9776;</span> Month</div>
+    <select id="fMonth"><option value="">All</option><option>Jan</option><option>Feb</option><option>Mar</option><option>Apr</option></select>
+  </div>
+  <div class="filter-card">
+    <div class="filter-card-label"><span class="f-icon">&#9733;</span> Category</div>
+    <select id="fCategory"><option value="">All</option></select>
+  </div>
+  <div class="filter-card">
+    <div class="filter-card-label"><span class="f-icon">&#8644;</span> Type</div>
+    <select id="fType"><option value="">All</option><option value="inflow">Inflow</option><option value="outflow">Outflow</option></select>
+  </div>
+  <div class="filter-card">
+    <div class="filter-card-label"><span class="f-icon">&#128269;</span> Search</div>
+    <input type="text" id="fSearch" placeholder="Search narrative...">
+  </div>
+  <div class="filter-card">
+    <div class="filter-card-label"><span class="f-icon">&#9650;</span> Top Amount</div>
+    <select id="fTop"><option value="">All</option><option value="10">Top 10</option><option value="20">Top 20</option><option value="50">Top 50</option></select>
+  </div>
+</div>
+<div class="filter-result" id="txnResult"></div>
+<div class="card" style="padding:0;">
+  <div class="vendor-table-wrap">
+    <table id="txnTable">
+      <thead><tr>
+        <th class="center" data-col="0"># <span class="sort-arrow">&#9650;</span></th>
+        <th data-col="1">Date <span class="sort-arrow">&#9650;</span></th>
+        <th data-col="2">Narrative <span class="sort-arrow">&#9650;</span></th>
+        <th class="num" data-col="3">Debit (Inflow) <span class="sort-arrow">&#9650;</span></th>
+        <th class="num" data-col="4">Credit (Outflow) <span class="sort-arrow">&#9650;</span></th>
+        <th data-col="5">Category <span class="sort-arrow">&#9650;</span></th>
+        <th data-col="6">Month <span class="sort-arrow">&#9650;</span></th>
+      </tr></thead>
+      <tbody id="txnBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="footer">Bank Transaction Dashboard &mdash; Talabat Finance &amp; Accounts Payable &mdash; Data as of April 2026</div>
+
+</div><!-- /container -->
+
+<script>
+// === RAW DATA ===
+const RAW=[
+["4/30/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",18835342.16,0,"Sales - Talabat","Apr"],
+["4/30/2026","BRJBDMAE052939(ED) AUTOPAY OUT BN0 SUPPLIERPAYMENTTHROUGHHS",0,-144820.41,"Supplier Payment","Apr"],
+["4/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042906948",321.43,0,"Collection EDR","Apr"],
+["4/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042904998",576.21,0,"Collection EDR","Apr"],
+["4/29/2026","HRAPR29(ED) AUTOPAY OUT BNZ SUPPLIERPAYMENTTHROUGHHS",0,-38409.33,"Salaries","Apr"],
+["4/29/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",380030.03,0,"Sales - Instashop","Apr"],
+["4/29/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 23 April 2026",10597701.64,0,"Sales - Talabat","Apr"],
+["4/29/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042806905",343.37,0,"Collection EDR","Apr"],
+["4/29/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042804958",679.54,0,"Collection EDR","Apr"],
+["4/28/2026","SMYLIE LTD GB31HBUK40613503010874 FX GBP 302401.86 AT 4.9500000 114BA005",0,-1496889.21,"Import Payment","Apr"],
+["4/28/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",2000000,0,"Sales - Talabat","Apr"],
+["4/28/2026","BRJBDMAE052911(ED) AUTOPAY OUT BNY SUPPLIERPAYMENTTHROUGHHS",0,-6074723.82,"Supplier Payment","Apr"],
+["4/28/2026","BRJBDMAE052938(ED) AUTOPAY OUT BNX SUPPLIERPAYMENTTHROUGHHS",0,-50832,"Supplier Payment","Apr"],
+["4/28/2026","BRJBDMAE052912(ED) AUTOPAY OUT BNW SUPPLIERPAYMENTTHROUGHHS",0,-4097876.89,"Supplier Payment","Apr"],
+["4/28/2026","BRJBDMAE052891(ED) AUTOPAY OUT BNV SUPPLIERPAYMENTTHROUGHHS",0,-1926742.54,"Supplier Payment","Apr"],
+["4/28/2026","TMARTREIMB(ED) AUTOPAY OUT BNU SUPPLIERPAYMENTTHROUGHHS",0,-2516.48,"Reimbursement Payment","Apr"],
+["4/28/2026","NYMCARD PAYMENT SERVICES LLC 03577FM016Y3",0,-1.05,"Bank charge","Apr"],
+["4/28/2026","NYMCARD PAYMENT SERVICES LLC 03577FM016Y3 AE320330000008000001829",0,-500000,"Pemo - Payment","Apr"],
+["4/28/2026","SPECIALTY COSMIC PETROCHEMICALS TRA /REF/Security Deposit Talabat WH 13 and14",80740,0,"Cheques for Rent","Apr"],
+["4/28/2026","1/STORES SERVICES KUWAIT FOR GENERA PAYMENT OF MAR'26 INVOICES",446048.69,0,"Receivable - IC","Apr"],
+["4/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042706983",210.3,0,"Collection EDR","Apr"],
+["4/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042705043",775.63,0,"Collection EDR","Apr"],
+["4/27/2026","Credit Interest 27MAR2026 TO 26APR2026",89768.3,0,"Interest","Apr"],
+["4/27/2026","HRAPR27(ED) AUTOPAY OUT BNT SUPPLIERPAYMENTTHROUGHHS",0,-4700,"Salaries","Apr"],
+["4/27/2026","SEQ:00000449 Cheque no. 501627",0,-125000,"Cheques for Rent","Apr"],
+["4/27/2026","SEQ:00000448 Cheque no. 501625",0,-125000,"Cheques for Rent","Apr"],
+["4/27/2026","SEQ:00001094 Cheque no. 501810",0,-105000,"Cheques for Rent","Apr"],
+["4/27/2026","SEQ:00001090 Cheque no. 501788",0,-30000,"Cheques for Rent","Apr"],
+["4/27/2026","SEQ:00001091 Cheque no. 501803",0,-250,"Cheques for Rent","Apr"],
+["4/27/2026","BRJBDMAE052840(ED) AUTOPAY OUT BNS SUPPLIERPAYMENTTHROUGHHS",0,-157715.13,"Supplier Payment","Apr"],
+["4/27/2026","SEQ:00000351 Cheque no. 501383",0,-7000,"Cheques for Rent","Apr"],
+["4/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042606463",196.24,0,"Collection EDR","Apr"],
+["4/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042604639",259.08,0,"Collection EDR","Apr"],
+["4/27/2026","UNILEVER GULF FZE /REF/INV",36192.85,0,"Receivable","Apr"],
+["4/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042506831",109.57,0,"Collection EDR","Apr"],
+["4/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042504917",332.73,0,"Collection EDR","Apr"],
+["4/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042406823",373.33,0,"Collection EDR","Apr"],
+["4/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042404943",549.52,0,"Collection EDR","Apr"],
+["4/25/2026","TMARTUAE026APR(ED) AUTOPAY OUT BNR SUPPLIERPAYMENTTHROUGHHS",0,-3701303.64,"Salaries","Apr"],
+["4/24/2026","DHARMESH SURESH PANCHAL /REF/Cash trnfr damaged pallets",1202,0,"Receivable - Damage Item","Apr"],
+["4/24/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",4000000,0,"Sales - Talabat","Apr"],
+["4/24/2026","BRJBDMAE052839(ED) AUTOPAY OUT BNQ SUPPLIERPAYMENTTHROUGHHS",0,-2238285.92,"Supplier Payment","Apr"],
+["4/24/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 20 April 2026",9939977.66,0,"Sales - Talabat","Apr"],
+["4/24/2026","PASTIFICIO MEDITERRANEA S.R.L. FX EUR 12242.88 AT 4.4079330",0,-53965.79,"Import Payment","Apr"],
+["4/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042306945",385.66,0,"Collection EDR","Apr"],
+["4/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042305019",971.11,0,"Collection EDR","Apr"],
+["4/23/2026","BRJBDMAE052786(ED) AUTOPAY OUT BNP SUPPLIERPAYMENTTHROUGHHS",0,-298862.55,"Supplier Payment","Apr"],
+["4/23/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",348534.61,0,"Sales - Instashop","Apr"],
+["4/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042206839",257.81,0,"Collection EDR","Apr"],
+["4/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042204931",702.92,0,"Collection EDR","Apr"],
+["4/22/2026","GPSSA",0,-1.05,"Bank charge","Apr"],
+["4/22/2026","GPSSA AE428510000000000008338 GPINVPEN465453P",0,-18469.25,"Pension Payment","Apr"],
+["4/22/2026","RTN PreFTS Reversal PMT/DMAE/002437 INVALID ACCOUNT NUMBER",157715.13,0,"Supplier Payment - RTN","Apr"],
+["4/22/2026","BRJBDMAE052762(ED) AUTOPAY OUT BNO SUPPLIERPAYMENTTHROUGHHS",0,-2627054.23,"Supplier Payment","Apr"],
+["4/22/2026","BRJBDMAE052755(ED) AUTOPAY OUT BNN SUPPLIERPAYMENTTHROUGHHS",0,-524908.58,"Supplier Payment","Apr"],
+["4/22/2026","PUBLICIS MEDIA FZ-LLC J112000287200001 INVDMAE027213",52807.34,0,"Receivable","Apr"],
+["4/22/2026","PUBLICIS MEDIA FZ-LLC J112000287730001 INVDMAE035077",252385.41,0,"Receivable","Apr"],
+["4/22/2026","PUBLICIS MEDIA FZ-LLC J112000284880001 INVDMAE034603",14253.66,0,"Receivable","Apr"],
+["4/22/2026","ARAB MARKETING AND FINANCE INC SETTLEMENT INV NO DMAE 036582 FX USD 20000.00 AT 3.6680000",73360,0,"Receivable","Apr"],
+["4/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042106838",184.95,0,"Collection EDR","Apr"],
+["4/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042104931",677.96,0,"Collection EDR","Apr"],
+["4/21/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",16746346.54,0,"Sales - Talabat","Apr"],
+["4/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26042007012",236.55,0,"Collection EDR","Apr"],
+["4/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26042005024",771.85,0,"Collection EDR","Apr"],
+["4/20/2026","DELIVERY HERO SE FX EUR 16482.06 AT 4.4400250",0,-73180.76,"DHSE Payment","Apr"],
+["4/20/2026","SEQ:00000910",0,-102500,"Cheques for Rent","Apr"],
+["4/20/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 13 April 2026",13150709.36,0,"Sales - Talabat","Apr"],
+["4/20/2026","SEQ:00000133",0,-134587,"Cheques for Rent","Apr"],
+["4/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041904751",159.22,0,"Collection EDR","Apr"],
+["4/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041906633",202.87,0,"Collection EDR","Apr"],
+["4/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041806945",96.41,0,"Collection EDR","Apr"],
+["4/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041804965",375.52,0,"Collection EDR","Apr"],
+["4/18/2026","SEQ:00000233 Cheque no. 501213",0,-450000,"Cheques for Rent","Apr"],
+["4/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041706896",372.84,0,"Collection EDR","Apr"],
+["4/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041704952",646.33,0,"Collection EDR","Apr"],
+["4/17/2026","HRAPR10(ED) AUTOPAY OUT BNM SUPPLIERPAYMENTTHROUGHHS",0,-321289.94,"Salaries","Apr"],
+["4/17/2026","SEQ:00000924 Cheque no. 501771",0,-75102.3,"Cheques for Rent","Apr"],
+["4/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041606931",212.55,0,"Collection EDR","Apr"],
+["4/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041605001",425.58,0,"Collection EDR","Apr"],
+["4/16/2026","BRJBDMAE052686(ED) AUTOPAY OUT BNL SUPPLIERPAYMENTTHROUGHHS",0,-144133.59,"Supplier Payment","Apr"],
+["4/16/2026","BRJBDMAE052703(ED) AUTOPAY OUT BNK SUPPLIERPAYMENTTHROUGHHS",0,-546674.46,"Supplier Payment","Apr"],
+["4/16/2026","NYMCARD PAYMENT SERVICES LLC 81077F900O7T",0,-1.05,"Bank charge","Apr"],
+["4/16/2026","NYMCARD PAYMENT SERVICES LLC 81077F900O7T AE320330000008000001829",0,-500000,"Pemo - Payment","Apr"],
+["4/16/2026","MANNA FOODS NV FX EUR 13478.00 AT 4.4421720",0,-59871.59,"Import Payment","Apr"],
+["4/16/2026","BRJBDMAE052698(ED) AUTOPAY OUT BNJ SUPPLIERPAYMENTTHROUGHHS",0,-6483902.13,"Supplier Payment","Apr"],
+["4/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041506907",422.34,0,"Collection EDR","Apr"],
+["4/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041504968",315.73,0,"Collection EDR","Apr"],
+["4/15/2026","BRJBDMAE052685(ED) AUTOPAY OUT BNI SUPPLIERPAYMENTTHROUGHHS",0,-12135569.98,"Supplier Payment","Apr"],
+["4/15/2026","BRJBDMAE052674(ED) AUTOPAY OUT BNH SUPPLIERPAYMENTTHROUGHHS",0,-39384.3,"Supplier Payment","Apr"],
+["4/15/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",372027.57,0,"Sales - Instashop","Apr"],
+["4/15/2026","Bank Charges via GBS 01MAR2026 TO 31MAR2026 Invoice No AEGBS1905842",0,-8385.3,"Bank charge","Apr"],
+["4/15/2026","BRJBDMAE052684(ED) AUTOPAY OUT BNG SUPPLIERPAYMENTTHROUGHHS",0,-2298334.27,"Supplier Payment","Apr"],
+["4/15/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041406885",246.72,0,"Collection EDR","Apr"],
+["4/15/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041404945",580.01,0,"Collection EDR","Apr"],
+["4/15/2026","UNILEVER GULF FZE /REF/INV",18186.84,0,"Receivable","Apr"],
+["4/14/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",17334081.28,0,"Sales - Talabat","Apr"],
+["4/14/2026","RECKITT BENCKISER ARABIA FZE /REF/Draft",355647.45,0,"Receivable","Apr"],
+["4/14/2026","BRJBDMAE052683(ED) AUTOPAY OUT BNF SUPPLIERPAYMENTTHROUGHHS",0,-2288436.85,"Supplier Payment","Apr"],
+["4/14/2026","SEQ:00000280",0,-48750,"Cheques for Rent","Apr"],
+["4/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041307029",294.34,0,"Collection EDR","Apr"],
+["4/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041305056",1247.38,0,"Collection EDR","Apr"],
+["4/14/2026","PASTA BOSSOLASCO S.S.A FX EUR 16380.16 AT 4.4153790",0,-72324.61,"Import Payment","Apr"],
+["4/13/2026","GPSSA",0,-1.05,"Bank charge","Apr"],
+["4/13/2026","GPSSA AE428510000000000008338 GPINVPEN457143P",0,-73275.5,"Pension Payment","Apr"],
+["4/13/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 06 April 2026",13600297.06,0,"Sales - Talabat","Apr"],
+["4/13/2026","HRAPR10(ED) AUTOPAY OUT BNE SUPPLIERPAYMENTTHROUGHHS",0,-16825.84,"Salaries","Apr"],
+["4/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041206611",51.26,0,"Collection EDR","Apr"],
+["4/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041204708",208.78,0,"Collection EDR","Apr"],
+["4/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041104992",86.52,0,"Collection EDR","Apr"],
+["4/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041106960",52.47,0,"Collection EDR","Apr"],
+["4/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26041006930",457.33,0,"Collection EDR","Apr"],
+["4/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26041004991",1973.79,0,"Collection EDR","Apr"],
+["4/10/2026","DAYMON WORLDWIDE CONSULTANCY FX EUR 19076.00 AT 4.4162050",0,-84243.53,"Import Payment","Apr"],
+["4/10/2026","SEQ:00001093 Cheque no. 501770",0,-107610,"Cheques for Rent","Apr"],
+["4/10/2026","SEQ:00000216",0,-195999,"Cheques for Rent","Apr"],
+["4/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040907056",270.08,0,"Collection EDR","Apr"],
+["4/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040905068",534.82,0,"Collection EDR","Apr"],
+["4/9/2026","BRJBDMAE052623(ED) AUTOPAY OUT BND SUPPLIERPAYMENTTHROUGHHS",0,-4718427.78,"Supplier Payment","Apr"],
+["4/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040807099",390.33,0,"Collection EDR","Apr"],
+["4/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040805092",272.36,0,"Collection EDR","Apr"],
+["4/8/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",258203.18,0,"Sales - Instashop","Apr"],
+["4/8/2026","SEQ:00000327 Cheque no. 501278",0,-135371.5,"Cheques for Rent","Apr"],
+["4/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040706980",234.35,0,"Collection EDR","Apr"],
+["4/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040704998",493.44,0,"Collection EDR","Apr"],
+["4/7/2026","DELIVERY HERO TALABAT DB LLC /REF/Balance Net Online Sales till 31 March 2026",468593.1,0,"Receivable - IC","Apr"],
+["4/7/2026","NYMCARD PAYMENT SERVICES LLC 18077F001AI8",0,-1.05,"Bank charge","Apr"],
+["4/7/2026","NYMCARD PAYMENT SERVICES LLC 18077F001AI8 AE320330000008000001829",0,-500000,"Pemo - Payment","Apr"],
+["4/7/2026","BRJBDMAE052610(ED) AUTOPAY OUT BNC SUPPLIERPAYMENTTHROUGHHS",0,-220849.8,"Supplier Payment","Apr"],
+["4/7/2026","DELIVERY HERO TALABAT DB L.L.C 21397F001RP6",13027771.33,0,"Sales - Talabat","Apr"],
+["4/7/2026","BRJBDMAE052609(ED) AUTOPAY OUT BNB SUPPLIERPAYMENTTHROUGHHS",0,-93555,"Supplier Payment","Apr"],
+["4/7/2026","SEQ:00001165 Cheque no. 501208",0,-200000,"Cheques for Rent","Apr"],
+["4/7/2026","SEQ:00000958 Cheque no. 501265",0,-770000,"Cheques for Rent","Apr"],
+["4/7/2026","RECALL CHARGES FOR AEL2604010010749 AE1260406-000248",0,-105,"Bank charge","Apr"],
+["4/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040606993",129.86,0,"Collection EDR","Apr"],
+["4/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040605012",713.75,0,"Collection EDR","Apr"],
+["4/7/2026","CASEIFICIO ALBIERO SRL FX EUR 17240.56 AT 4.3550940",0,-75084.26,"Import Payment","Apr"],
+["4/7/2026","UNILEVER GULF FZE /REF/INV",24631.63,0,"Receivable","Apr"],
+["4/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040506609",121.48,0,"Collection EDR","Apr"],
+["4/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040504717",370.63,0,"Collection EDR","Apr"],
+["4/6/2026","UNILEVER GULF FZE /REF/INV",71028.49,0,"Receivable","Apr"],
+["4/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040404981",219.5,0,"Collection EDR","Apr"],
+["4/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040406962",194.68,0,"Collection EDR","Apr"],
+["4/4/2026","SEQ:00000615 Cheque no. 501152",0,-585033,"Cheques for Rent","Apr"],
+["4/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040306886",245.06,0,"Collection EDR","Apr"],
+["4/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040304961",370.27,0,"Collection EDR","Apr"],
+["4/3/2026","FROM MUHAMMED AHNAS YOGI HIB- Cash trnfr damaged pallets",17000,0,"Receivable - Damage Item","Apr"],
+["4/3/2026","TMARTREIMB(ED) AUTOPAY OUT BNA SUPPLIERPAYMENTTHROUGHHS",0,-1197.33,"Reimbursement Payment","Apr"],
+["4/3/2026","HRAPR02(ED) AUTOPAY OUT BM9 SUPPLIERPAYMENTTHROUGHHS",0,-233696.41,"Salaries","Apr"],
+["4/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040207011",188.61,0,"Collection EDR","Apr"],
+["4/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040205034",618.89,0,"Collection EDR","Apr"],
+["4/2/2026","SEQ:00001273",0,-90000,"Cheques for Rent","Apr"],
+["4/2/2026","SEQ:00000729 Cheque no. 501286",0,-200000,"Cheques for Rent","Apr"],
+["4/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26040107002",210.89,0,"Collection EDR","Apr"],
+["4/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26040105027",390.45,0,"Collection EDR","Apr"],
+["4/1/2026","HouseCheque DR 501091 SDP House Cheque Cheque no. 501091",0,-660226,"Cheques for Rent","Apr"],
+["4/1/2026","BRJBDMAE052017(ED) AUTOPAY OUT BM8 SUPPLIERPAYMENTTHROUGHHS",0,-38820311.01,"Supplier Payment","Apr"],
+["4/1/2026","BRJBDMAE052073(ED) AUTOPAY OUT BM7 SUPPLIERPAYMENTTHROUGHHS",0,-41155336.56,"Supplier Payment","Apr"],
+["4/1/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",226273.16,0,"Sales - Instashop","Apr"],
+["4/1/2026","BRJBDMAE051912(ED) AUTOPAY OUT BM6 SUPPLIERPAYMENTTHROUGHHS",0,-1960975.37,"Supplier Payment","Apr"],
+["4/1/2026","BRJBDMAE052004(ED) AUTOPAY OUT BM5 SUPPLIERPAYMENTTHROUGHHS",0,-50832,"Supplier Payment","Apr"],
+["4/1/2026","SEQ:00003105 Cheque no. 501621",0,-834000,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00000323 Cheque no. 501202",0,-99800,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00002514",0,-96250,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00002175",0,-33750,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00001841 Cheque no. 501013",0,-45412,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00003300",0,-87500,"Cheques for Rent","Apr"],
+["4/1/2026","SEQ:00000724 Cheque no. 501729",0,-85405,"Cheques for Rent","Apr"],
+["4/1/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26033106923",411.89,0,"Collection EDR","Apr"],
+["4/1/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26033104967",369.45,0,"Collection EDR","Apr"],
+["3/31/2026","DELIVERY HERO TALABAT DB L.L.C 12447ET01DUY",7807698.84,0,"Sales - Talabat","Mar"],
+["3/31/2026","HRMAR30(ED) AUTOPAY OUT BM4 SUPPLIERPAYMENTTHROUGHHS",0,-51850.96,"Salaries","Mar"],
+["3/31/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26033006991",181.45,0,"Collection EDR","Mar"],
+["3/31/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26033005016",295.3,0,"Collection EDR","Mar"],
+["3/30/2026","SMYLIE LTD FX GBP 117498.62 AT 4.9798300",0,-585123.15,"Import Payment","Mar"],
+["3/30/2026","BRJBDMAE051938(ED) AUTOPAY OUT BM3 SUPPLIERPAYMENTTHROUGHHS",0,-451116.68,"Supplier Payment","Mar"],
+["3/30/2026","RECKITT BENCKISER ARABIA FZE /REF/INVDMAE029667",285063.85,0,"Receivable","Mar"],
+["3/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032906598",88.06,0,"Collection EDR","Mar"],
+["3/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032904724",260.29,0,"Collection EDR","Mar"],
+["3/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032804899",272.38,0,"Collection EDR","Mar"],
+["3/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032806824",85.54,0,"Collection EDR","Mar"],
+["3/28/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 22 Mar 2026",8375488.1,0,"Sales - Talabat","Mar"],
+["3/28/2026","SEQ:00000113 Cheque no. 501720",0,-46053,"Cheques for Rent","Mar"],
+["3/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032706096",45.48,0,"Collection EDR","Mar"],
+["3/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032704362",404.21,0,"Collection EDR","Mar"],
+["3/27/2026","Credit Interest 27FEB2026 TO 26MAR2026",142873.51,0,"Interest","Mar"],
+["3/27/2026","HRMAR27(ED) AUTOPAY OUT BM2 SUPPLIERPAYMENTTHROUGHHS",0,-40338.46,"Salaries","Mar"],
+["3/27/2026","BRJBDMAE051939(ED) AUTOPAY OUT BM1 SUPPLIERPAYMENTTHROUGHHS",0,-6598684.44,"Supplier Payment","Mar"],
+["3/27/2026","SEQ:00000409 Cheque no. 501727",0,-92106,"Cheques for Rent","Mar"],
+["3/27/2026","SEQ:00000408 Cheque no. 501702",0,-230265,"Cheques for Rent","Mar"],
+["3/27/2026","SEQ:00000405 Cheque no. 501728",0,-200,"Cheques for Rent","Mar"],
+["3/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032606695",236.82,0,"Collection EDR","Mar"],
+["3/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032604786",185.88,0,"Collection EDR","Mar"],
+["3/26/2026","TMARTREIMB(ED) AUTOPAY OUT BM0 SUPPLIERPAYMENTTHROUGHHS",0,-4531.77,"Reimbursement Payment","Mar"],
+["3/26/2026","GPSSA",0,-1.05,"Bank charge","Mar"],
+["3/26/2026","GPSSA AE428510000000000008338 GPINVPEN437834P",0,-1890,"Pension Payment","Mar"],
+["3/26/2026","MARISTELLA SRL FX EUR 12127.20 AT 4.3567570",0,-52835.26,"Import Payment","Mar"],
+["3/26/2026","VERGANI SRL FX EUR 48014.10 AT 4.3567950",0,-209187.59,"Import Payment","Mar"],
+["3/26/2026","BRJBDMAE051867(ED) AUTOPAY OUT BMZ SUPPLIERPAYMENTTHROUGHHS",0,-5537664.04,"Supplier Payment","Mar"],
+["3/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032506745",189.35,0,"Collection EDR","Mar"],
+["3/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032504867",167.19,0,"Collection EDR","Mar"],
+["3/25/2026","BRJBDMAE051860(ED) AUTOPAY OUT BMY SUPPLIERPAYMENTTHROUGHHS",0,-154783.35,"Supplier Payment","Mar"],
+["3/25/2026","TMARTUAE026MAR(ED) AUTOPAY OUT BMX SUPPLIERPAYMENTTHROUGHHS",0,-3761098.25,"Salaries","Mar"],
+["3/25/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 18 Mar 2026",6901025.74,0,"Sales - Talabat","Mar"],
+["3/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032406917",284.97,0,"Collection EDR","Mar"],
+["3/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032404968",267.69,0,"Collection EDR","Mar"],
+["3/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032306925",194.73,0,"Collection EDR","Mar"],
+["3/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032304985",328.88,0,"Collection EDR","Mar"],
+["3/23/2026","NYMCARD PAYMENT SERVICES LLC",0,-1.05,"Bank charge","Mar"],
+["3/23/2026","NYMCARD PAYMENT SERVICES LLC AE320330000008000001829",0,-500000,"Pemo - Payment","Mar"],
+["3/23/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",396282.96,0,"Sales - Instashop","Mar"],
+["3/23/2026","SEQ:00000281",0,-48750,"Cheques for Rent","Mar"],
+["3/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032205017",240.25,0,"Collection EDR","Mar"],
+["3/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032206907",168.86,0,"Collection EDR","Mar"],
+["3/22/2026","BRJBDMAE051830(ED) AUTOPAY OUT BMW SUPPLIERPAYMENTTHROUGHHS",0,-2613024.88,"Supplier Payment","Mar"],
+["3/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032106868",107.39,0,"Collection EDR","Mar"],
+["3/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032104933",283.84,0,"Collection EDR","Mar"],
+["3/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26032006802",99.62,0,"Collection EDR","Mar"],
+["3/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26032004908",200.35,0,"Collection EDR","Mar"],
+["3/20/2026","SEQ:00000660 Cheque no. 501386",0,-91163,"Cheques for Rent","Mar"],
+["3/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031906990",246.08,0,"Collection EDR","Mar"],
+["3/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031905024",270.11,0,"Collection EDR","Mar"],
+["3/19/2026","DELIVERY HERO SE FX EUR 55775.48 AT 4.4183320",0,-246425.62,"DHSE Payment","Mar"],
+["3/19/2026","BRJBDMAE051781(ED) AUTOPAY OUT BMV SUPPLIERPAYMENTTHROUGHHS",0,-7035.00,"Supplier Payment","Mar"],
+["3/19/2026","UNILEVER GULF FZE /REF/INV",26340.30,0,"Receivable","Mar"],
+["3/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031806862",177.69,0,"Collection EDR","Mar"],
+["3/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031804924",198.63,0,"Collection EDR","Mar"],
+["3/18/2026","BRJBDMAE051761(ED) AUTOPAY OUT BMU SUPPLIERPAYMENTTHROUGHHS",0,-2843019.06,"Supplier Payment","Mar"],
+["3/18/2026","BRJBDMAE051747(ED) AUTOPAY OUT BMT SUPPLIERPAYMENTTHROUGHHS",0,-1085133.49,"Supplier Payment","Mar"],
+["3/18/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",508478.93,0,"Sales - Instashop","Mar"],
+["3/18/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",18684750.62,0,"Sales - Talabat","Mar"],
+["3/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031706966",286.92,0,"Collection EDR","Mar"],
+["3/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031704971",203.5,0,"Collection EDR","Mar"],
+["3/17/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 13 Mar 2026",13078506.96,0,"Sales - Talabat","Mar"],
+["3/17/2026","BRJBDMAE051753(ED) AUTOPAY OUT BMS SUPPLIERPAYMENTTHROUGHHS",0,-1523048.97,"Supplier Payment","Mar"],
+["3/17/2026","SEQ:00000746 Cheque no. 501644",0,-90000.00,"Cheques for Rent","Mar"],
+["3/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031606898",88.19,0,"Collection EDR","Mar"],
+["3/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031604951",171.81,0,"Collection EDR","Mar"],
+["3/16/2026","SEQ:00000693 Cheque no. 501067",0,-270833,"Cheques for Rent","Mar"],
+["3/16/2026","TMARTREIMB(ED) AUTOPAY OUT BMP SUPPLIERPAYMENTTHROUGHHS",0,-1753.74,"Reimbursement Payment","Mar"],
+["3/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031506613",20.16,0,"Collection EDR","Mar"],
+["3/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031504745",116.16,0,"Collection EDR","Mar"],
+["3/16/2026","GPSSA AE428510000000000008338 GPINVPEN435250P",0,-3780,"Pension Payment","Mar"],
+["3/16/2026","HRMAR13(ED) AUTOPAY OUT BMO SUPPLIERPAYMENTTHROUGHHS",0,-19530.43,"Salaries","Mar"],
+["3/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031405002",121.8,0,"Collection EDR","Mar"],
+["3/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031406975",61.96,0,"Collection EDR","Mar"],
+["3/14/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 09 Mar 2026",11133036.48,0,"Sales - Talabat","Mar"],
+["3/14/2026","DELIVERY HERO TALABAT DB L.L.C 49557EB01PBS",3500000,0,"Sales - Talabat","Mar"],
+["3/14/2026","SEQ:00000779 Cheque no. 501632",0,-131250,"Cheques for Rent","Mar"],
+["3/14/2026","SEQ:00000767 Cheque no. 501653",0,-131250,"Cheques for Rent","Mar"],
+["3/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031306892",114.34,0,"Collection EDR","Mar"],
+["3/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031304965",204.47,0,"Collection EDR","Mar"],
+["3/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031207024",85.9,0,"Collection EDR","Mar"],
+["3/13/2026","Driscoll's of Europe BV INV/DMAE/034595 FX EUR 933.24",3819.74,0,"Receivable","Mar"],
+["3/13/2026","SEQ:00000857 Cheque no. 501236",0,-134632,"Cheques for Rent","Mar"],
+["3/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031205051",323.34,0,"Collection EDR","Mar"],
+["3/12/2026","DIBBA MUNICIPALITY",0,-1.05,"Bank charge","Mar"],
+["3/12/2026","DIBBA MUNICIPALITY AE660380000012000105919",0,-113613,"Supplier Payment","Mar"],
+["3/12/2026","SEQ:00000002 Cheque no. 501330",0,-300000,"Cheques for Rent","Mar"],
+["3/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031106932",216.33,0,"Collection EDR","Mar"],
+["3/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031104995",287,0,"Collection EDR","Mar"],
+["3/12/2026","UNILEVER GULF FZE /REF/INV",70357.88,0,"Receivable","Mar"],
+["3/12/2026","BRJBDMAE051709(ED) AUTOPAY OUT BMN SUPPLIERPAYMENTTHROUGHHS",0,-205230.9,"Supplier Payment","Mar"],
+["3/11/2026","PUBLICIS MEDIA FZ-LLC J070000465990001 INVDMAE022669",152840.8,0,"Receivable","Mar"],
+["3/11/2026","PPR ME DWC LLC Payment February Invoice 35460 to 35465",153774.81,0,"Receivable","Mar"],
+["3/11/2026","PUBLICIS MEDIA FZ-LLC J070000382290001 INVDMAE033323",176960.77,0,"Receivable","Mar"],
+["3/11/2026","PUBLICIS MEDIA FZ-LLC J070000373290001 INVDMAE033348",86534.6,0,"Receivable","Mar"],
+["3/11/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",537273.51,0,"Sales - Instashop","Mar"],
+["3/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26031006936",88.85,0,"Collection EDR","Mar"],
+["3/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26031005003",290.31,0,"Collection EDR","Mar"],
+["3/11/2026","FEDERALTAXAUTHORITY",0,-1.05,"Bank charge","Mar"],
+["3/11/2026","FEDERALTAXAUTHORITY AE968680100608487300007",0,-15402.27,"Tax Payment","Mar"],
+["3/11/2026","UNILEVER GULF FZE /REF/INV",26142.69,0,"Receivable","Mar"],
+["3/10/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 06 Mar 2026",12927946.07,0,"Sales - Talabat","Mar"],
+["3/10/2026","DELIVERY HERO TALABAT DB L.L.C 13907E801G5D",7000000,0,"Sales - Talabat","Mar"],
+["3/10/2026","SEQ:00000666 Cheque no. 501382",0,-91163,"Cheques for Rent","Mar"],
+["3/10/2026","BRJBDMAE051613(ED) AUTOPAY OUT BMM SUPPLIERPAYMENTTHROUGHHS",0,-23264.04,"Supplier Payment","Mar"],
+["3/10/2026","BRJBDMAE051618(ED) AUTOPAY OUT BML SUPPLIERPAYMENTTHROUGHHS",0,-8183666.54,"Supplier Payment","Mar"],
+["3/10/2026","BRJBDMAE051586(ED) AUTOPAY OUT BMK SUPPLIERPAYMENTTHROUGHHS",0,-65882.85,"Supplier Payment","Mar"],
+["3/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030906892",231.5,0,"Collection EDR","Mar"],
+["3/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030904977",249.66,0,"Collection EDR","Mar"],
+["3/9/2026","ARABYADS FZ LLC",63242.61,0,"Receivable","Mar"],
+["3/9/2026","DELIVERY HERO TALABAT DB L.L.C TALABAT PAYMENT FOR 1-2MAR26 SALES",8910809.09,0,"Sales - Talabat","Mar"],
+["3/9/2026","SEQ:00000268 Cheque no. 501486",0,-80740,"Cheques for Rent","Mar"],
+["3/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030806504",177.06,0,"Collection EDR","Mar"],
+["3/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030804668",91.41,0,"Collection EDR","Mar"],
+["3/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030704941",230.42,0,"Collection EDR","Mar"],
+["3/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030706839",191.49,0,"Collection EDR","Mar"],
+["3/7/2026","SEQ:00000325 Cheque no. 501239",0,-135371.5,"Cheques for Rent","Mar"],
+["3/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030606685",276.47,0,"Collection EDR","Mar"],
+["3/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030604805",309.8,0,"Collection EDR","Mar"],
+["3/5/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",431019.94,0,"Sales - Instashop","Mar"],
+["3/5/2026","DELIVERY HERO TALABAT DB LLC /REF/Balance Net Online Sales till 28 Feb 2026",1255613.83,0,"Receivable - IC","Mar"],
+["3/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030407086",254.41,0,"Collection EDR","Mar"],
+["3/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030405071",453.09,0,"Collection EDR","Mar"],
+["3/4/2026","BRJBDMAE050441(ED) AUTOPAY OUT BMJ SUPPLIERPAYMENTTHROUGHHS",0,-49612.34,"Supplier Payment","Mar"],
+["3/4/2026","BRJBDMAE050409(ED) AUTOPAY OUT BMI SUPPLIERPAYMENTTHROUGHHS",0,-3145606.29,"Supplier Payment","Mar"],
+["3/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030306859",276.79,0,"Collection EDR","Mar"],
+["3/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030304955",377.06,0,"Collection EDR","Mar"],
+["3/3/2026","BRJBDMAE050429(ED) AUTOPAY OUT BMH SUPPLIERPAYMENTTHROUGHHS",0,-50832,"Supplier Payment","Mar"],
+["3/3/2026","HRMAR03(ED) AUTOPAY OUT BMG SUPPLIERPAYMENTTHROUGHHS",0,-247012.7,"Salaries","Mar"],
+["3/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030207063",233.34,0,"Collection EDR","Mar"],
+["3/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030205073",368.83,0,"Collection EDR","Mar"],
+["3/2/2026","BRJBDMAE049385(ED) AUTOPAY OUT BMF SUPPLIERPAYMENTTHROUGHHS",0,-30651445.16,"Supplier Payment","Mar"],
+["3/2/2026","BRJBDMAE049454(ED) AUTOPAY OUT BME SUPPLIERPAYMENTTHROUGHHS",0,-24651063.87,"Supplier Payment","Mar"],
+["3/2/2026","DELIVERY HERO TALABAT DB L.L.C 69877E301M62",17684073.09,0,"Sales - Talabat","Mar"],
+["3/2/2026","SEQ:00000719 Cheque no. 501390",0,-200000,"Cheques for Rent","Mar"],
+["3/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26030106848",337.14,0,"Collection EDR","Mar"],
+["3/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26030104949",308.17,0,"Collection EDR","Mar"],
+["3/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022807087",331.71,0,"Collection EDR","Mar"],
+["3/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022805105",459.73,0,"Collection EDR","Mar"],
+["2/27/2026","Credit Interest 27JAN2026 TO 26FEB2026",112714.77,0,"Interest","Feb"],
+["2/27/2026","BRJBDMAE050337(ED) AUTOPAY OUT BMG SUPPLIERPAYMENTTHROUGHHS",0,-7073379.4,"Supplier Payment","Feb"],
+["2/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022607048",419.95,0,"Collection EDR","Feb"],
+["2/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022605084",633.14,0,"Collection EDR","Feb"],
+["2/26/2026","SEQ:00000790 Cheque no. 501401",0,-46666.67,"Cheques for Rent","Feb"],
+["2/26/2026","SEQ:00000117",0,-409500,"Cheques for Rent","Feb"],
+["2/26/2026","RTN PreFTS Reversal INVALID BENE BANK IBAN",213.3,0,"Salaries","Feb"],
+["2/26/2026","TMARTREIMB(ED) AUTOPAY OUT BMF SUPPLIERPAYMENTTHROUGHHS",0,-8125.83,"Reimbursement Payment","Feb"],
+["2/26/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",503987.66,0,"Sales - Instashop","Feb"],
+["2/26/2026","GPSSA",0,-1.05,"Bank charge","Feb"],
+["2/26/2026","GPSSA AE428510000000000008338 GPINVPEN410705P",0,-6641.08,"Pension Payment","Feb"],
+["2/26/2026","INTERNATIONAL EXPORTS, INC FX USD 89303.93 AT 3.6780000",0,-328459.85,"Import Payment","Feb"],
+["2/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022507020",216.44,0,"Collection EDR","Feb"],
+["2/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022505068",716.69,0,"Collection EDR","Feb"],
+["2/26/2026","UNILEVER GENERAL TRADING LLC /REF/INV",30240,0,"Receivable","Feb"],
+["2/26/2026","PHD FZ-LLC /REF/.",24786.08,0,"Receivable","Feb"],
+["2/26/2026","OPTIMUM MEDIA DIRECTION FZ-LLC /REF/.",142917.5,0,"Receivable","Feb"],
+["2/25/2026","MAF BUSINESSMEN SERVICES LLC /REF/ADVANCE RETURN FROM MAF",51220,0,"Supplier Payment","Feb"],
+["2/25/2026","SEQ:00000445 Cheque no. 501253",0,-173250,"Cheques for Rent","Feb"],
+["2/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022407337",395.58,0,"Collection EDR","Feb"],
+["2/25/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022405271",379.83,0,"Collection EDR","Feb"],
+["2/25/2026","BRJBDMAE050279(ED) AUTOPAY OUT BME SUPPLIERPAYMENTTHROUGHHS",0,-142655.07,"Supplier Payment","Feb"],
+["2/25/2026","TMARTUAE026FEB(ED) AUTOPAY OUT BMD SUPPLIERPAYMENTTHROUGHHS",0,-3196649.52,"Salaries","Feb"],
+["2/24/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 20 Feb 2026",8550477.2,0,"Sales - Talabat","Feb"],
+["2/24/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",10000000,0,"Sales - Talabat","Feb"],
+["2/24/2026","SEQ:00000584 Cheque no. 501545",0,-363135.94,"Cheques for Rent","Feb"],
+["2/24/2026","BRJBDMAE050306(ED) AUTOPAY OUT BMC SUPPLIERPAYMENTTHROUGHHS",0,-4573531.91,"Supplier Payment","Feb"],
+["2/24/2026","SEQ:00000546 Cheque no. 501546",0,-5000,"Cheques for Rent","Feb"],
+["2/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022307290",317.62,0,"Collection EDR","Feb"],
+["2/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022305239",316.36,0,"Collection EDR","Feb"],
+["2/23/2026","FIDARJAN LIMITED",0,-50832,"Supplier Payment","Feb"],
+["2/23/2026","ESSENCEMEDIACOM COMMUNICATIONS L.L.",13402.2,0,"Receivable","Feb"],
+["2/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022206915",257.43,0,"Collection EDR","Feb"],
+["2/23/2026","DELIVERY HERO TALABAT DB LLC /REF/INTER GROUP TRANSFER TMART SALES 1-16TH FEB 2026",8000000,0,"Sales - Talabat","Feb"],
+["2/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022204952",125.77,0,"Collection EDR","Feb"],
+["2/23/2026","UNILEVER GENERAL TRADING LLC /REF/INV",149520,0,"Receivable","Feb"],
+["2/23/2026","UNILEVER GULF FZE /REF/INV",27547.01,0,"Receivable","Feb"],
+["2/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022105203",585.7,0,"Collection EDR","Feb"],
+["2/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022107248",204.45,0,"Collection EDR","Feb"],
+["2/23/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 16 Feb 2026",5396107.1,0,"Sales - Talabat","Feb"],
+["2/21/2026","SEQ:00000926 Cheque no. 501516",0,-124687.5,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000763 Cheque no. 501570",0,-62108,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000762 Cheque no. 501585",0,-124215,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000761 Cheque no. 501572",0,-310538,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000760 Cheque no. 501580",0,-65213.4,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000749 Cheque no. 501577",0,-15750,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000752 Cheque no. 501576",0,-4725,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000751 Cheque no. 501583",0,-10500,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000750 Cheque no. 501584",0,-315,"Cheques for Rent","Feb"],
+["2/21/2026","SEQ:00000260 Cheque no. 501311",0,-203973.99,"Cheques for Rent","Feb"],
+["2/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26022007176",380.78,0,"Collection EDR","Feb"],
+["2/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26022005172",514.66,0,"Collection EDR","Feb"],
+["2/20/2026","SEQ:00001473 Cheque no. 501520",0,-23750,"Cheques for Rent","Feb"],
+["2/20/2026","SEQ:00000563",0,-131670,"Cheques for Rent","Feb"],
+["2/20/2026","DELIVERY HERO SE FX EUR 17497.80 AT 4.4465410",0,-77804.69,"DHSE Payment","Feb"],
+["2/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021907330",389.47,0,"Collection EDR","Feb"],
+["2/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021905265",509.63,0,"Collection EDR","Feb"],
+["2/19/2026","SMYLIE LTD FX GBP 449422.71 AT 4.9995000",0,-2246888.84,"Import Payment","Feb"],
+["2/19/2026","DELIVERY HERO STORES DB LLC FX USD 700000.00 AT 3.6735000",0,-2571450,"Exchange","Feb"],
+["2/19/2026","BRJBDMAE050244(ED) AUTOPAY OUT BMB SUPPLIERPAYMENTTHROUGHHS",0,-1171099.81,"Supplier Payment","Feb"],
+["2/19/2026","DUBAI INTEGRATED ECONOMIC ZONES AUT /REF/365",30020,0,"Receivable - Damage Item","Feb"],
+["2/19/2026","SEQ:00000448 Cheque no. 501606",0,-50000,"Cheques for Rent","Feb"],
+["2/19/2026","SEQ:00000446 Cheque no. 501607",0,-25000,"Cheques for Rent","Feb"],
+["2/19/2026","SEQ:00000428 Cheque no. 501605",0,-52500,"Cheques for Rent","Feb"],
+["2/19/2026","SEQ:00000957 Cheque no. 501604",0,-250000,"Cheques for Rent","Feb"],
+["2/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021807238",354.4,0,"Collection EDR","Feb"],
+["2/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021805229",638.06,0,"Collection EDR","Feb"],
+["2/18/2026","SUPPLEMENTARY CHARGES",0,-115.5,"Supplier Payment","Feb"],
+["2/18/2026","UNILEVER GULF FZE /REF/INV",21062,0,"Receivable","Feb"],
+["2/18/2026","SEQ:00000787 Cheque no. 501426",0,-91667.5,"Cheques for Rent","Feb"],
+["2/18/2026","BRJBDMAE050203(ED) AUTOPAY OUT BMA SUPPLIERPAYMENTTHROUGHHS",0,-500923.36,"Supplier Payment","Feb"],
+["2/18/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",17039022.69,0,"Sales - Talabat","Feb"],
+["2/18/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",471670.73,0,"Sales - Instashop","Feb"],
+["2/18/2026","NYMCARD PAYMENT SERVICES LLC",0,-1.05,"Bank charge","Feb"],
+["2/18/2026","NYMCARD PAYMENT SERVICES LLC AE320330000008000001829",0,-500000,"Pemo - Payment","Feb"],
+["2/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021707530",551.09,0,"Collection EDR","Feb"],
+["2/18/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021705417",922.38,0,"Collection EDR","Feb"],
+["2/18/2026","UNILEVER GULF FZE /REF/INV",30373.2,0,"Receivable","Feb"],
+["2/18/2026","UNILEVER GENERAL TRADING LLC /REF/INV",5985.84,0,"Receivable","Feb"],
+["2/17/2026","SEQ:00001617 Cheque no. 501523",0,-250000,"Cheques for Rent","Feb"],
+["2/17/2026","SEQ:00000101 Cheque no. 501182",0,-315000,"Cheques for Rent","Feb"],
+["2/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021607622",612.21,0,"Collection EDR","Feb"],
+["2/17/2026","SEQ:00000740 Cheque no. 501319",0,-220500,"Cheques for Rent","Feb"],
+["2/17/2026","SEQ:00000295 Cheque no. 501076",0,-412500,"Cheques for Rent","Feb"],
+["2/17/2026","ARAB MARKETING AND FINANCE FX USD 14990.00 AT 3.6680000",54983.32,0,"Receivable","Feb"],
+["2/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021605476",934.3,0,"Collection EDR","Feb"],
+["2/17/2026","STORES SERVICES KUWAIT FOR GENERAL PAYMENT OF JAN'26 INVOICES",341952.69,0,"Receivable - IC","Feb"],
+["2/17/2026","PUBLICIS MEDIA FZ-LLC J047000456440001 INVDMAE031092",309460.47,0,"Receivable","Feb"],
+["2/17/2026","PUBLICIS MEDIA FZ-LLC J047000456630001 INVDMAE028911",104793.86,0,"Receivable","Feb"],
+["2/17/2026","PUBLICIS MEDIA FZ-LLC J047000456600001 INVDMAE016088",175120.2,0,"Receivable","Feb"],
+["2/17/2026","DELIVERY HERO STORES DB LLC FX USD 45000.00 AT 3.6780000",0,-165510,"Exchange","Feb"],
+["2/16/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 09 Feb 2026",12611193.36,0,"Sales - Talabat","Feb"],
+["2/16/2026","Bank Charges via GBS 01JAN2026 TO 31JAN2026 Invoice No AEGBS1873460",0,-7713.3,"Bank charge","Feb"],
+["2/16/2026","RTN ACH AE1221215-000224 INVALID ACCOUNT NUMBER",500923.36,0,"Supplier Payment - RTN","Feb"],
+["2/16/2026","SEQ:00001017 Cheque no. 501412",0,-65625,"Cheques for Rent","Feb"],
+["2/16/2026","RTN UAE WPS INVALID BENE BANK IBAN",213.3,0,"Salaries","Feb"],
+["2/16/2026","TMARTREIMB(ED) AUTOPAY OUT BL9 SUPPLIERPAYMENTTHROUGHHS",0,-19278.61,"Reimbursement Payment","Feb"],
+["2/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021507052",263.32,0,"Collection EDR","Feb"],
+["2/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021505040",317.46,0,"Collection EDR","Feb"],
+["2/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021407522",381.79,0,"Collection EDR","Feb"],
+["2/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021405405",501.75,0,"Collection EDR","Feb"],
+["2/14/2026","FAROLIN FOODSTUFF MANUFACTURING LLC payment",29500,0,"Receivable - Damage Item","Feb"],
+["2/14/2026","SEQ:00000550 Cheque no. 501431",0,-229388.8,"Cheques for Rent","Feb"],
+["2/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021307466",248.72,0,"Collection EDR","Feb"],
+["2/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021305386",607.44,0,"Collection EDR","Feb"],
+["2/12/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",5000000,0,"Sales - Talabat","Feb"],
+["2/12/2026","SEQ:00001519",0,-50000,"Cheques for Rent","Feb"],
+["2/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021107303",348.62,0,"Collection EDR","Feb"],
+["2/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021105267",590.53,0,"Collection EDR","Feb"],
+["2/11/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 05 Feb 2026",10660001.22,0,"Sales - Talabat","Feb"],
+["2/11/2026","BRJBDMAE050176(ED) AUTOPAY OUT BLZ SUPPLIERPAYMENTTHROUGHHS",0,-2100405.85,"Supplier Payment","Feb"],
+["2/11/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",404458.63,0,"Sales - Instashop","Feb"],
+["2/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26021007266",409.45,0,"Collection EDR","Feb"],
+["2/11/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26021005249",759.2,0,"Collection EDR","Feb"],
+["2/10/2026","BRJBDMAE050177(ED) AUTOPAY OUT BLY SUPPLIERPAYMENTTHROUGHHS",0,-6556792.8,"Supplier Payment","Feb"],
+["2/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020907353",428.63,0,"Collection EDR","Feb"],
+["2/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020905325",703.48,0,"Collection EDR","Feb"],
+["2/9/2026","GPSSA",0,-1.05,"Bank charge","Feb"],
+["2/9/2026","GPSSA AE428510000000000008338 GPINVPEN389558P",0,-71302.57,"Pension Payment","Feb"],
+["2/9/2026","HRFEB09(ED) AUTOPAY OUT BLX SUPPLIERPAYMENTTHROUGHHS",0,-15003.49,"Salaries","Feb"],
+["2/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020807472",386.88,0,"Collection EDR","Feb"],
+["2/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020805402",591.36,0,"Collection EDR","Feb"],
+["2/8/2026","SEQ:00000549 Cheque no. 501430",0,-79100,"Cheques for Rent","Feb"],
+["2/8/2026","SEQ:00000548 Cheque no. 501432",0,-23625,"Cheques for Rent","Feb"],
+["2/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020707430",449.81,0,"Collection EDR","Feb"],
+["2/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020705368",693.08,0,"Collection EDR","Feb"],
+["2/7/2026","SEQ:00000786 Cheque no. 501458",0,-70000,"Cheques for Rent","Feb"],
+["2/7/2026","SEQ:00000547 Cheque no. 501429",0,-46200,"Cheques for Rent","Feb"],
+["2/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020607438",328.27,0,"Collection EDR","Feb"],
+["2/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020605357",498.3,0,"Collection EDR","Feb"],
+["2/6/2026","BRJBDMAE050141(ED) AUTOPAY OUT BL1 SUPPLIERPAYMENTTHROUGHHS",0,-7035,"Supplier Payment","Feb"],
+["2/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020507744",407.72,0,"Collection EDR","Feb"],
+["2/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020505575",701.7,0,"Collection EDR","Feb"],
+["2/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020407511",700.41,0,"Collection EDR","Feb"],
+["2/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020405401",768.43,0,"Collection EDR","Feb"],
+["2/4/2026","SEQ:00000631",0,-472500,"Cheques for Rent","Feb"],
+["2/4/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",364241.74,0,"Sales - Instashop","Feb"],
+["2/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020307677",609.13,0,"Collection EDR","Feb"],
+["2/4/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020305509",1060.98,0,"Collection EDR","Feb"],
+["2/4/2026","BRJBDMAE050058(ED) AUTOPAY OUT BL0 SUPPLIERPAYMENTTHROUGHHS",0,-712214.66,"Supplier Payment","Feb"],
+["2/3/2026","TMARTREIMB(ED) AUTOPAY OUT BLZ SUPPLIERPAYMENTTHROUGHHS",0,-1810.4,"Reimbursement Payment","Feb"],
+["2/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020207698",514.95,0,"Collection EDR","Feb"],
+["2/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020205550",755.01,0,"Collection EDR","Feb"],
+["2/2/2026","RTN UAE WPS UNABLE TO LOCATE ACCOUNT",4782.87,0,"Salaries","Feb"],
+["2/2/2026","TMARTUAER26JAN(ED) AUTOPAY OUT BLY SUPPLIERPAYMENTTHROUGHHS",0,-4782.87,"Salaries","Feb"],
+["2/2/2026","SEQ:00002363 Cheque no. 501185",0,-450000,"Cheques for Rent","Feb"],
+["2/2/2026","BRJBDMAE048679(ED) AUTOPAY OUT BLX SUPPLIERPAYMENTTHROUGHHS",0,-26917225.89,"Supplier Payment","Feb"],
+["2/2/2026","BRJBDMAE049227(ED) AUTOPAY OUT BLW SUPPLIERPAYMENTTHROUGHHS",0,-28603815.38,"Supplier Payment","Feb"],
+["2/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26020107155",228.53,0,"Collection EDR","Feb"],
+["2/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26020105116",604.95,0,"Collection EDR","Feb"],
+["2/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26013107604",260.38,0,"Collection EDR","Feb"],
+["2/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26013105460",556.16,0,"Collection EDR","Feb"],
+["1/31/2026","SEQ:00000357 Cheque no. 501105",0,-393750,"Cheques for Rent","Jan"],
+["1/31/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26013007512",329.95,0,"Collection EDR","Jan"],
+["1/31/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26013005407",784.4,0,"Collection EDR","Jan"],
+["1/31/2026","PIWHEEL FZCO /REF/Talabat Jan26 pmt",79101.75,0,"Receivable","Jan"],
+["1/30/2026","PAY BY 023-124746-001 TO 5550 4100 1521 6900",0,-420,"Supplier Payment","Jan"],
+["1/30/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",9386849.95,0,"Sales - Talabat","Jan"],
+["1/30/2026","Driscoll's of Europe BV FX EUR 3030.24 AT 4.2615076",12913.39,0,"Receivable","Jan"],
+["1/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012907694",641.7,0,"Collection EDR","Jan"],
+["1/30/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012905521",1384.84,0,"Collection EDR","Jan"],
+["1/30/2026","DAYMON WORLDWIDE CONSULTANCY FX EUR 19076.00 AT 4.5131750",0,-86093.33,"Import Payment","Jan"],
+["1/30/2026","BRJBDMAE048544(ED) AUTOPAY OUT BLV SUPPLIERPAYMENTTHROUGHHS",0,-50832,"Supplier Payment","Jan"],
+["1/30/2026","BRJBDMAE048546(ED) AUTOPAY OUT BLU SUPPLIERPAYMENTTHROUGHHS",0,-1579125.26,"Supplier Payment","Jan"],
+["1/30/2026","BRJBDMAE048553(ED) AUTOPAY OUT BLT SUPPLIERPAYMENTTHROUGHHS",0,-3716754.34,"Supplier Payment","Jan"],
+["1/30/2026","TMARTREIMB(ED) AUTOPAY OUT BLS SUPPLIERPAYMENTTHROUGHHS",0,-4055.92,"Reimbursement Payment","Jan"],
+["1/30/2026","TMARTREIMB(ED) AUTOPAY OUT BLR SUPPLIERPAYMENTTHROUGHHS",0,-8807.83,"Reimbursement Payment","Jan"],
+["1/29/2026","NYMCARD PAYMENT SERVICES LLC",0,-1.05,"Bank charge","Jan"],
+["1/29/2026","NYMCARD PAYMENT SERVICES LLC AE320330000008000001829",0,-500000,"Pemo - Payment","Jan"],
+["1/29/2026","W J TOWELL CO LLC DXB /REF/Against Quote Foster Clark UAE V146001",56600.94,0,"Receivable","Jan"],
+["1/29/2026","RECKITT BENCKISER ARABIA FZE /REF/INVDMAE024082",664472.86,0,"Receivable","Jan"],
+["1/29/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012807587",928.4,0,"Collection EDR","Jan"],
+["1/29/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012805432",948.92,0,"Collection EDR","Jan"],
+["1/28/2026","SEQ:00001034 Cheque no. 501425",0,-26800,"Cheques for Rent","Jan"],
+["1/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012707661",744.19,0,"Collection EDR","Jan"],
+["1/28/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012705527",829.21,0,"Collection EDR","Jan"],
+["1/28/2026","BRJBDMAE048528(ED) AUTOPAY OUT BLQ SUPPLIERPAYMENTTHROUGHHS",0,-99771.84,"Supplier Payment","Jan"],
+["1/28/2026","BRJBDMAE048530(ED) AUTOPAY OUT BLP SUPPLIERPAYMENTTHROUGHHS",0,-2104417.86,"Supplier Payment","Jan"],
+["1/28/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 23 Jan 2026",17635600.61,0,"Sales - Talabat","Jan"],
+["1/27/2026","Credit Interest 27DEC2025 TO 26JAN2026",78711.29,0,"Interest","Jan"],
+["1/27/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",449520.46,0,"Sales - Instashop","Jan"],
+["1/27/2026","DELIVERY HERO CARRIAGE DB LLC /REF/TMART TRF/",57843.46,0,"Receivable - IC","Jan"],
+["1/27/2026","TURKONNECT GIDA TARIM FX USD 99585.72 AT 3.6780000",0,-366276.28,"Import Payment","Jan"],
+["1/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012607557",666.13,0,"Collection EDR","Jan"],
+["1/27/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012605442",1177.25,0,"Collection EDR","Jan"],
+["1/26/2026","BRJBDMAE048472(ED) AUTOPAY OUT BLO SUPPLIERPAYMENTTHROUGHHS",0,-497927.24,"Supplier Payment","Jan"],
+["1/26/2026","STORES SERVICES KUWAIT FOR GENERAL PAYMENT OF DEC'25 INVOICES",230997.54,0,"Receivable - IC","Jan"],
+["1/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012507100",290.62,0,"Collection EDR","Jan"],
+["1/26/2026","RTN UAE WPS UNABLE TO LOCATE ACCOUNT",4782.87,0,"Salaries","Jan"],
+["1/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012505077",809.98,0,"Collection EDR","Jan"],
+["1/26/2026","PHD FZ-LLC /REF/.",11097.87,0,"Receivable","Jan"],
+["1/26/2026","Optimum Media Direction FZ-LLC /REF/.",153499.5,0,"Receivable","Jan"],
+["1/26/2026","PHD FZ-LLC /REF/.",14130.9,0,"Receivable","Jan"],
+["1/26/2026","DELIVERY HERO TALABAT DB LLC /REF/Separate IC Settlement",11257182.82,0,"Sales - Talabat","Jan"],
+["1/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012405419",349.96,0,"Collection EDR","Jan"],
+["1/26/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012407516",480.78,0,"Collection EDR","Jan"],
+["1/26/2026","TMARTUAE026JAN(ED) AUTOPAY OUT BLN SUPPLIERPAYMENTTHROUGHHS",0,-4748915.58,"Salaries","Jan"],
+["1/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012307506",398.85,0,"Collection EDR","Jan"],
+["1/24/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012305429",945.02,0,"Collection EDR","Jan"],
+["1/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012207647",340.68,0,"Collection EDR","Jan"],
+["1/23/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012205524",1735.45,0,"Collection EDR","Jan"],
+["1/22/2026","BRJBDMAE048445(ED) AUTOPAY OUT BLM SUPPLIERPAYMENTTHROUGHHS",0,-740326.33,"Supplier Payment","Jan"],
+["1/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012107567",594.05,0,"Collection EDR","Jan"],
+["1/22/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012105470",1153.56,0,"Collection EDR","Jan"],
+["1/21/2026","SEQ:00001186 Cheque no. 501418",0,-126000,"Cheques for Rent","Jan"],
+["1/21/2026","SEQ:00000058 Cheque no. 501309",0,-106060.5,"Cheques for Rent","Jan"],
+["1/21/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",418071.75,0,"Sales - Instashop","Jan"],
+["1/21/2026","DELIVERY HERO SE FX EUR 81088.09 AT 4.4208390",0,-358477.39,"DHSE Payment","Jan"],
+["1/21/2026","BRJBDMAE048444(ED) AUTOPAY OUT BLL SUPPLIERPAYMENTTHROUGHHS",0,-183103.31,"Supplier Payment","Jan"],
+["1/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26012007551",391.45,0,"Collection EDR","Jan"],
+["1/21/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26012005456",887.8,0,"Collection EDR","Jan"],
+["1/20/2026","SEQ:00001515",0,-102500,"Cheques for Rent","Jan"],
+["1/20/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",16037899.39,0,"Sales - Talabat","Jan"],
+["1/20/2026","ESSENCEMEDIACOM COMMUNICATIONS L.L.",166299.56,0,"Receivable","Jan"],
+["1/20/2026","SEQ:00000193",0,-134587,"Cheques for Rent","Jan"],
+["1/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011907750",389.12,0,"Collection EDR","Jan"],
+["1/20/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011905585",944.67,0,"Collection EDR","Jan"],
+["1/19/2026","BRJBDMAE048448(ED) AUTOPAY OUT BLK SUPPLIERPAYMENTTHROUGHHS",0,-1043979.2,"Supplier Payment","Jan"],
+["1/19/2026","HRJAN19(ED) AUTOPAY OUT BLJ SUPPLIERPAYMENTTHROUGHHS",0,-40760.68,"Salaries","Jan"],
+["1/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011807195",134.45,0,"Collection EDR","Jan"],
+["1/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011805171",686.97,0,"Collection EDR","Jan"],
+["1/19/2026","UNILEVER GENERAL TRADING LLC /REF/INV",1677.48,0,"Receivable","Jan"],
+["1/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011707564",335.44,0,"Collection EDR","Jan"],
+["1/19/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011705444",628.06,0,"Collection EDR","Jan"],
+["1/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011607580",434.21,0,"Collection EDR","Jan"],
+["1/17/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011605487",869.91,0,"Collection EDR","Jan"],
+["1/16/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 12 Jan 2026",11176481.11,0,"Sales - Talabat","Jan"],
+["1/16/2026","BRJBDMAE048405(ED) AUTOPAY OUT BLI SUPPLIERPAYMENTTHROUGHHS",0,-5943177.95,"Supplier Payment","Jan"],
+["1/16/2026","NYMCARD PAYMENT SERVICES LLC",0,-1.05,"Bank charge","Jan"],
+["1/16/2026","NYMCARD PAYMENT SERVICES LLC AE320330000008000001829",0,-500000,"Pemo - Payment","Jan"],
+["1/16/2026","SEQ:00000261 Cheque no. 501215",0,-450000,"Cheques for Rent","Jan"],
+["1/16/2026","BRJBDMAE048404(ED) AUTOPAY OUT BLH SUPPLIERPAYMENTTHROUGHHS",0,-6932535.54,"Supplier Payment","Jan"],
+["1/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011507754",482.1,0,"Collection EDR","Jan"],
+["1/16/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011505596",936.57,0,"Collection EDR","Jan"],
+["1/16/2026","UNIVERSAL MEDIA SEVEN FZ-LLC PAYMENT FOR BELOW INVOICES",20687.42,0,"Receivable","Jan"],
+["1/15/2026","Bank Charges via GBS 01DEC2025 TO 31DEC2025 Invoice No AEGBS1857468",0,-8150.1,"Bank charge","Jan"],
+["1/15/2026","SEQ:00000470",0,-540225,"Cheques for Rent","Jan"],
+["1/15/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011407774",349.04,0,"Collection EDR","Jan"],
+["1/15/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011405620",1280.06,0,"Collection EDR","Jan"],
+["1/14/2026","BRJBDMAE048382(ED) AUTOPAY OUT BLG SUPPLIERPAYMENTTHROUGHHS",0,-1400585.55,"Supplier Payment","Jan"],
+["1/14/2026","BRJBDMAE048380(ED) AUTOPAY OUT BLF SUPPLIERPAYMENTTHROUGHHS",0,-201235.86,"Supplier Payment","Jan"],
+["1/14/2026","BRJBDMAE048393(ED) AUTOPAY OUT BLE SUPPLIERPAYMENTTHROUGHHS",0,-5038071.67,"Supplier Payment","Jan"],
+["1/14/2026","BRJBDMAE048378(ED) AUTOPAY OUT BLD SUPPLIERPAYMENTTHROUGHHS",0,-72781.22,"Supplier Payment","Jan"],
+["1/14/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",423930.36,0,"Sales - Instashop","Jan"],
+["1/14/2026","TRANSFER FROM DELIVERY HERO TALABAT DB SUPPLIER PAYMENT OF DELIVERY HERO TALABAT DB LLC",15116880.37,0,"Sales - Talabat","Jan"],
+["1/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011307714",334.98,0,"Collection EDR","Jan"],
+["1/14/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011305571",1026.5,0,"Collection EDR","Jan"],
+["1/13/2026","NATURELLE LLC /REF/",176.4,0,"Receivable","Jan"],
+["1/13/2026","SEQ:00000454",0,-48750,"Cheques for Rent","Jan"],
+["1/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011207645",257.57,0,"Collection EDR","Jan"],
+["1/13/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011205531",1118.84,0,"Collection EDR","Jan"],
+["1/13/2026","UNILEVER GULF FZE /REF/INV",71180.86,0,"Receivable","Jan"],
+["1/12/2026","DEWA - CUSTOMER REFUND A/C",2643.29,0,"Receivable - Damage Item","Jan"],
+["1/12/2026","HRJAN12(ED) AUTOPAY OUT BLC SUPPLIERPAYMENTTHROUGHHS",0,-148572.41,"Salaries","Jan"],
+["1/12/2026","SEQ:00000183",0,-647188.99,"Cheques for Rent","Jan"],
+["1/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011107094",215.34,0,"Collection EDR","Jan"],
+["1/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011105116",756.62,0,"Collection EDR","Jan"],
+["1/12/2026","BRJBDMAE048303(ED) AUTOPAY OUT BLB SUPPLIERPAYMENTTHROUGHHS",0,-4804957.22,"Supplier Payment","Jan"],
+["1/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26011005487",379.75,0,"Collection EDR","Jan"],
+["1/12/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26011007590",256.96,0,"Collection EDR","Jan"],
+["1/10/2026","SEQ:00000705",0,-498050,"Cheques for Rent","Jan"],
+["1/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010907500",552.87,0,"Collection EDR","Jan"],
+["1/10/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010905447",667.72,0,"Collection EDR","Jan"],
+["1/10/2026","NATURELLE LLC /REF/",1666.46,0,"Receivable","Jan"],
+["1/9/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 05 Jan 2026",8671516.4,0,"Sales - Talabat","Jan"],
+["1/9/2026","Driscoll's of Europe BV INV/DMAE/033233 FX EUR 2742.45",11419.34,0,"Receivable","Jan"],
+["1/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010807963",642.98,0,"Collection EDR","Jan"],
+["1/9/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010805756",759.03,0,"Collection EDR","Jan"],
+["1/8/2026","GPSSA",0,-1.05,"Bank charge","Jan"],
+["1/8/2026","GPSSA AE428510000000000008338 GPINVPEN364500P",0,-62562.75,"Pension Payment","Jan"],
+["1/8/2026","BRJBDMAE048318(ED) AUTOPAY OUT BLA SUPPLIERPAYMENTTHROUGHHS",0,-7040162.09,"Supplier Payment","Jan"],
+["1/8/2026","FEDERALTAXAUTHORITY",0,-1.05,"Bank charge","Jan"],
+["1/8/2026","FEDERALTAXAUTHORITY AE968680100608487300007",0,-140667.18,"Tax Payment","Jan"],
+["1/8/2026","SEQ:00000329 Cheque no. 501276",0,-135371.5,"Cheques for Rent","Jan"],
+["1/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010706103",869.31,0,"Collection EDR","Jan"],
+["1/8/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010704533",843.02,0,"Collection EDR","Jan"],
+["1/8/2026","NATURELLE LLC /REF/",5300.82,0,"Receivable","Jan"],
+["1/7/2026","DELIVERY HERO TALABAT DB LLC /REF/Balance Net Online Sales till 31 Dec 2025",4866058.42,0,"Sales - Talabat","Jan"],
+["1/7/2026","DELIVERY HERO TALABAT DB LLC /REF/Biweekly Net Online Sales from 01 To 03 Jan 2026",11152576.43,0,"Sales - Talabat","Jan"],
+["1/7/2026","SEQ:00000919 Cheque no. 501206",0,-200000,"Cheques for Rent","Jan"],
+["1/7/2026","SEQ:00000160 Cheque no. 501149",0,-585034,"Cheques for Rent","Jan"],
+["1/7/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",317657.91,0,"Sales - Instashop","Jan"],
+["1/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010606449",583.89,0,"Collection EDR","Jan"],
+["1/7/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010604739",724.64,0,"Collection EDR","Jan"],
+["1/6/2026","SEQ:00000711 Cheque no. 501413",0,-120000,"Cheques for Rent","Jan"],
+["1/6/2026","SEQ:00000408 Cheque no. 501038",0,-458868,"Cheques for Rent","Jan"],
+["1/6/2026","SEQ:00000135 Cheque no. 501407",0,-630000,"Cheques for Rent","Jan"],
+["1/6/2026","SEQ:00000758 Cheque no. 501409",0,-400,"Cheques for Rent","Jan"],
+["1/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010506110",295.75,0,"Collection EDR","Jan"],
+["1/6/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010504544",710.22,0,"Collection EDR","Jan"],
+["1/6/2026","PUBLICIS MEDIA FZ-LLC J005000468840001",32498.68,0,"Receivable","Jan"],
+["1/6/2026","PUBLICIS MEDIA FZ-LLC J005000468850001",361077.33,0,"Receivable","Jan"],
+["1/5/2026","SEQ:00001917",0,-90000,"Cheques for Rent","Jan"],
+["1/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010405590",470.16,0,"Collection EDR","Jan"],
+["1/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010404136",855.22,0,"Collection EDR","Jan"],
+["1/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010304343",481.03,0,"Collection EDR","Jan"],
+["1/5/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010305834",237.98,0,"Collection EDR","Jan"],
+["1/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010205820",480.79,0,"Collection EDR","Jan"],
+["1/3/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010204339",530.57,0,"Collection EDR","Jan"],
+["1/2/2026","INSTASHOP DMCC /REF/WEEKLY ONL SAL SM",394897.47,0,"Sales - Instashop","Jan"],
+["1/2/2026","RTN PreFTS Reversal PMT/DMAE/001437 INVALID ACCOUNT NUMBER",125008.58,0,"Supplier Payment - RTN","Jan"],
+["1/2/2026","RTN PreFTS Reversal PMT/DMAE/001394 INVALID ACCOUNT NUMBER",131685.77,0,"Supplier Payment - RTN","Jan"],
+["1/2/2026","BRJBDMAE047070(ED) AUTOPAY OUT BK9 SUPPLIERPAYMENTTHROUGHHS",0,-34236746.49,"Supplier Payment","Jan"],
+["1/2/2026","BRJBDMAE047081(ED) AUTOPAY OUT BK8 SUPPLIERPAYMENTTHROUGHHS",0,-32703831.67,"Supplier Payment","Jan"],
+["1/2/2026","BRJBDMAE047987(ED) AUTOPAY OUT BK7 SUPPLIERPAYMENTTHROUGHHS",0,-6655.5,"Supplier Payment","Jan"],
+["1/2/2026","SEQ:00003135",0,-33750,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00002554",0,-96250,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00002547",0,-19250,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00003212",0,-105000,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00002992 Cheque no. 501379",0,-91163,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00002260 Cheque no. 501021",0,-45412.95,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00003134",0,-6750,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00002980 Cheque no. 501377",0,-520,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00000831 Cheque no. 501285",0,-214570.21,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00000247 Cheque no. 501124",0,-101250,"Cheques for Rent","Jan"],
+["1/2/2026","SEQ:00000243 Cheque no. 501200",0,-99800,"Cheques for Rent","Jan"],
+["1/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH26010105226",263.82,0,"Collection EDR","Jan"],
+["1/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH26010103873",849.24,0,"Collection EDR","Jan"],
+["1/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 171718MERCH25123104394",184.3,0,"Collection EDR","Jan"],
+["1/2/2026","MASHREQBANK /REF/MERCHANT NET SETTLEMENT/001000 247468MERCH25123105910",231.57,0,"Collection EDR","Jan"]
+];
+
+// === HELPERS ===
+const MONTHS=["Jan","Feb","Mar","Apr"];
+function fmtM(v){if(Math.abs(v)>=1e6)return (v/1e6).toFixed(2)+"M";if(Math.abs(v)>=1e3)return (v/1e3).toFixed(1)+"K";return v.toFixed(2);}
+function fmtN(v){if(!v)return"";return v.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function truncate(s,n){return s.length>n?s.substring(0,n)+"...":s;}
+
+// === COMPUTE AGGREGATES ===
+let totalInflow=0,totalOutflow=0;
+const monthInflow={Jan:0,Feb:0,Mar:0,Apr:0},monthOutflow={Jan:0,Feb:0,Mar:0,Apr:0};
+const catInflow={},catOutflow={};
+const catMonthInflow={},catMonthOutflow={};
+const allCategories=new Set();
+
+RAW.forEach(r=>{
+  const debit=r[2]||0,credit=r[3]||0,cat=r[4],mon=r[5];
+  if(debit>0){totalInflow+=debit;monthInflow[mon]=(monthInflow[mon]||0)+debit;catInflow[cat]=(catInflow[cat]||0)+debit;if(!catMonthInflow[cat])catMonthInflow[cat]={};catMonthInflow[cat][mon]=(catMonthInflow[cat][mon]||0)+debit;}
+  if(credit<0){totalOutflow+=credit;monthOutflow[mon]=(monthOutflow[mon]||0)+credit;catOutflow[cat]=(catOutflow[cat]||0)+credit;if(!catMonthOutflow[cat])catMonthOutflow[cat]={};catMonthOutflow[cat][mon]=(catMonthOutflow[cat][mon]||0)+credit;}
+  allCategories.add(cat);
+});
+const netCF=totalInflow+totalOutflow;
+const txnCount=RAW.length;
+const totalAbs=RAW.reduce((s,r)=>s+Math.abs(r[2]||0)+Math.abs(r[3]||0),0);
+const avgTxn=totalAbs/txnCount;
+
+// === KPI CARDS ===
+document.getElementById("kpiRow").innerHTML=`
+<div class="kpi-card positive"><div class="kpi-label">Total Inflow</div><div class="kpi-value">${fmtM(totalInflow)} AED</div><div class="kpi-delta up">&#9650; Debit transactions</div></div>
+<div class="kpi-card negative"><div class="kpi-label">Total Outflow</div><div class="kpi-value">${fmtM(Math.abs(totalOutflow))} AED</div><div class="kpi-delta down">&#9660; Credit transactions</div></div>
+<div class="kpi-card" style="border-top-color:var(--orange)"><div class="kpi-label">Net Cash Flow</div><div class="kpi-value">${fmtM(netCF)} AED</div><div class="kpi-delta ${netCF>=0?"up":"down"}">${netCF>=0?"&#9650;":"&#9660;"} Inflow - Outflow</div></div>
+<div class="kpi-card count-card"><div class="kpi-label">Transaction Count</div><div class="kpi-value">${txnCount}</div><div class="kpi-delta" style="color:var(--text-light)">Jan - Apr 2026</div></div>
+<div class="kpi-card neutral"><div class="kpi-label">Avg Transaction</div><div class="kpi-value">${fmtM(avgTxn)} AED</div><div class="kpi-delta" style="color:var(--text-light)">Average absolute amount</div></div>`;
+
+// === POPULATE CATEGORY FILTER ===
+const catSel=document.getElementById("fCategory");
+[...allCategories].sort().forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;catSel.appendChild(o);});
+
+// === CHARTS ===
+const chartColors={green:"#27AE60",red:"#E74C3C",orange:"#FF5A00",orangeLight:"#FF7A2E",coral:"#FF6B6B",blue:"#3498DB"};
+
+// Monthly Cash Flow
+new Chart(document.getElementById("chartMonthlyCF"),{type:"bar",data:{labels:MONTHS,datasets:[{label:"Inflow",data:MONTHS.map(m=>monthInflow[m]),backgroundColor:chartColors.green,borderRadius:4},{label:"Outflow",data:MONTHS.map(m=>Math.abs(monthOutflow[m])),backgroundColor:chartColors.red,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtM(v)}}}}});
+
+// Category Bar Charts
+const catInflowSorted=Object.entries(catInflow).sort((a,b)=>b[1]-a[1]);
+const catOutflowSorted=Object.entries(catOutflow).sort((a,b)=>a[1]-b[1]);
+
+new Chart(document.getElementById("chartCatInflow"),{type:"bar",data:{labels:catInflowSorted.map(c=>c[0]),datasets:[{label:"Inflow (AED)",data:catInflowSorted.map(c=>c[1]),backgroundColor:chartColors.orange,borderRadius:4}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}}});
+
+new Chart(document.getElementById("chartCatOutflow"),{type:"bar",data:{labels:catOutflowSorted.map(c=>c[0]),datasets:[{label:"Outflow (AED)",data:catOutflowSorted.map(c=>Math.abs(c[1])),backgroundColor:chartColors.coral,borderRadius:4}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}}});
+
+// Doughnut charts
+const doughColors=["#FF5A00","#FF7A2E","#FF9A5C","#FFC09F","#27AE60","#2ECC71","#3498DB","#E74C3C","#9B59B6","#F39C12","#1ABC9C","#E67E22","#34495E","#95A5A6","#D35400","#C0392B"];
+
+new Chart(document.getElementById("chartDoughInflow"),{type:"doughnut",data:{labels:catInflowSorted.map(c=>c[0]),datasets:[{data:catInflowSorted.map(c=>c[1]),backgroundColor:doughColors.slice(0,catInflowSorted.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}}}}});
+
+new Chart(document.getElementById("chartDoughOutflow"),{type:"doughnut",data:{labels:catOutflowSorted.map(c=>c[0]),datasets:[{data:catOutflowSorted.map(c=>Math.abs(c[1])),backgroundColor:doughColors.slice(0,catOutflowSorted.length)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"right",labels:{font:{size:11},boxWidth:12}}}}});
+
+// === HEATMAP TABLE ===
+(function(){
+  const cats=[...allCategories].sort();
+  const tbl=document.getElementById("heatmapTable");
+  let h="<thead><tr><th class='cat-cell' data-hsort='cat'>Category <span class='sort-arrow'>&#9650;</span></th>";
+  MONTHS.forEach(m=>{h+="<th class='num' data-hsort='"+m+"'>"+m+" <span class='sort-arrow'>&#9650;</span></th>";});
+  h+="<th class='num' data-hsort='total'>Total <span class='sort-arrow'>&#9650;</span></th></tr></thead><tbody>";
+  const rowData=cats.map(cat=>{
+    const vals={};let total=0;
+    MONTHS.forEach(m=>{
+      const inV=(catMonthInflow[cat]&&catMonthInflow[cat][m])||0;
+      const outV=(catMonthOutflow[cat]&&catMonthOutflow[cat][m])||0;
+      vals[m]=inV+outV;total+=vals[m];
+    });
+    return{cat,vals,total};
+  });
+  rowData.forEach(rd=>{
+    h+="<tr><td class='cat-cell'>"+rd.cat+"</td>";
+    MONTHS.forEach(m=>{
+      const v=rd.vals[m];
+      const cls=v>0?"heatmap-inflow":v<0?"heatmap-outflow":"heatmap-zero";
+      h+="<td class='"+cls+"'>"+fmtN(v)+"</td>";
+    });
+    const cls=rd.total>0?"heatmap-inflow":rd.total<0?"heatmap-outflow":"heatmap-zero";
+    h+="<td class='"+cls+"'>"+fmtN(rd.total)+"</td></tr>";
+  });
+  h+="</tbody>";tbl.innerHTML=h;
+
+  // Sortable heatmap
+  let hSortCol="cat",hSortAsc=true;
+  tbl.querySelectorAll("th").forEach(th=>{
+    th.addEventListener("click",()=>{
+      const col=th.dataset.hsort;
+      if(hSortCol===col)hSortAsc=!hSortAsc;else{hSortCol=col;hSortAsc=true;}
+      rowData.sort((a,b)=>{
+        let va,vb;
+        if(col==="cat"){va=a.cat;vb=b.cat;return hSortAsc?va.localeCompare(vb):vb.localeCompare(va);}
+        if(col==="total"){va=a.total;vb=b.total;}
+        else{va=a.vals[col]||0;vb=b.vals[col]||0;}
+        return hSortAsc?va-vb:vb-va;
+      });
+      const tbody=tbl.querySelector("tbody");tbody.innerHTML="";
+      rowData.forEach(rd=>{
+        let r="<tr><td class='cat-cell'>"+rd.cat+"</td>";
+        MONTHS.forEach(m=>{const v=rd.vals[m];const cls=v>0?"heatmap-inflow":v<0?"heatmap-outflow":"heatmap-zero";r+="<td class='"+cls+"'>"+fmtN(v)+"</td>";});
+        const cls=rd.total>0?"heatmap-inflow":rd.total<0?"heatmap-outflow":"heatmap-zero";
+        r+="<td class='"+cls+"'>"+fmtN(rd.total)+"</td></tr>";tbody.innerHTML+=r;
+      });
+    });
+  });
+})();
+
+// === TRANSACTION TABLE ===
+let filtered=[...RAW];
+let sortCol=-1,sortAsc=true;
+
+function applyFilters(){
+  const fMon=document.getElementById("fMonth").value;
+  const fCat=document.getElementById("fCategory").value;
+  const fTyp=document.getElementById("fType").value;
+  const fSrch=document.getElementById("fSearch").value.toLowerCase();
+  const fTopV=document.getElementById("fTop").value;
+
+  filtered=RAW.filter(r=>{
+    if(fMon&&r[5]!==fMon)return false;
+    if(fCat&&r[4]!==fCat)return false;
+    if(fTyp==="inflow"&&!(r[2]>0))return false;
+    if(fTyp==="outflow"&&!(r[3]<0))return false;
+    if(fSrch&&!r[1].toLowerCase().includes(fSrch))return false;
+    return true;
+  });
+
+  if(fTopV){
+    filtered.sort((a,b)=>(Math.abs(b[2]||0)+Math.abs(b[3]||0))-(Math.abs(a[2]||0)+Math.abs(a[3]||0)));
+    filtered=filtered.slice(0,parseInt(fTopV));
+  }
+
+  sortCol=-1;sortAsc=true;
+  renderTable();
+  renderResult(fMon,fCat,fTyp,fSrch,fTopV);
+}
+
+function renderResult(fMon,fCat,fTyp,fSrch,fTopV){
+  const el=document.getElementById("txnResult");
+  let tags="";
+  if(fMon)tags+='<span class="filter-tag t-period">'+fMon+"</span>";
+  if(fCat)tags+='<span class="filter-tag t-group">'+fCat+"</span>";
+  if(fTyp)tags+='<span class="filter-tag t-movement">'+fTyp+"</span>";
+  if(fSrch)tags+='<span class="filter-tag t-variance">&ldquo;'+fSrch+'&rdquo;</span>';
+  if(fTopV)tags+='<span class="filter-tag t-group">Top '+fTopV+"</span>";
+  el.innerHTML='<div class="filter-result-text"><span>'+filtered.length+"</span> transactions</div>"+'<div class="filter-result-tags">'+tags+"</div>";
+}
+
+function renderTable(){
+  const tbody=document.getElementById("txnBody");
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="7" class="no-data">No transactions match your filters</td></tr>';return;}
+  let html="";
+  filtered.forEach((r,i)=>{
+    const narr=truncate(r[1],60);
+    html+="<tr><td class='center'>"+(i+1)+"</td><td>"+r[0]+"</td>"
+    +"<td title='"+r[1].replace(/'/g,"&#39;")+"'>"+narr+"</td>"
+    +"<td class='num"+(r[2]>0?" positive-val":"")+"'>"+(r[2]>0?fmtN(r[2]):"")+"</td>"
+    +"<td class='num"+(r[3]<0?" negative-val":"")+"'>"+(r[3]<0?fmtN(r[3]):"")+"</td>"
+    +"<td>"+r[4]+"</td><td>"+r[5]+"</td></tr>";
+  });
+  tbody.innerHTML=html;
+}
+
+// Sort
+document.querySelectorAll("#txnTable th").forEach(th=>{
+  th.addEventListener("click",()=>{
+    const col=parseInt(th.dataset.col);
+    if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}
+    filtered.sort((a,b)=>{
+      let va,vb;
+      if(col===0){va=filtered.indexOf(a);vb=filtered.indexOf(b);return sortAsc?va-vb:vb-va;}
+      if(col===1){va=new Date(a[0]);vb=new Date(b[0]);}
+      else if(col===2){va=a[1];vb=b[1];return sortAsc?va.localeCompare(vb):vb.localeCompare(va);}
+      else if(col===3){va=a[2]||0;vb=b[2]||0;}
+      else if(col===4){va=a[3]||0;vb=b[3]||0;}
+      else if(col===5){va=a[4];vb=b[4];return sortAsc?va.localeCompare(vb):vb.localeCompare(va);}
+      else if(col===6){va=MONTHS.indexOf(a[5]);vb=MONTHS.indexOf(b[5]);}
+      return sortAsc?(va-vb):(vb-va);
+    });
+    document.querySelectorAll("#txnTable th").forEach(t=>t.classList.remove("sorted"));
+    th.classList.add("sorted");
+    th.querySelector(".sort-arrow").textContent=sortAsc?"▲":"▼";
+    renderTable();
+  });
+});
+
+// Filter events
+["fMonth","fCategory","fType","fTop"].forEach(id=>document.getElementById(id).addEventListener("change",applyFilters));
+document.getElementById("fSearch").addEventListener("input",applyFilters);
+
+// Initial render
+applyFilters();
+</script>
+</body>
+</html>
