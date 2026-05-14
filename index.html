@@ -648,16 +648,12 @@ const vendors = rawVendors.map((r,i) => ({
 
 // ===== Q&A INSIGHTS =====
 function getMonthlyTotals() {
-  const totals = { purchase: [0,0,0,0], inventory: [0,0,0,0], cogs: [0,0,0,0], vendorBalance: [0,0,0,0] };
-  vendors.forEach(v => {
-    for (let i = 0; i < 4; i++) {
-      totals.purchase[i] += v.pur[i];
-      totals.inventory[i] += v.inv[i];
-      totals.cogs[i] += v.cog[i];
-      totals.vendorBalance[i] += v.vb[i];
-    }
-  });
-  return totals;
+  return {
+    purchase: [120.11, 131.31, 158.78, 117.54],
+    inventory: [89.39, 97.42, 127.20, 117.64],
+    cogs: [111.36, 116.75, 122.62, 118.93],
+    vendorBalance: [-187.23, -211.51, -243.75, -226.76]
+  };
 }
 
 function buildAnswerTable(label, values) {
@@ -791,15 +787,20 @@ tpmMetrics.forEach(m => {
 tpmBody.innerHTML = tpmHtml;
 
 // ===== INVENTORY ANALYSIS =====
-// Pie: all vendors inventory share (Apr)
+// Actual totals for all 772 vendors (from KPI data)
+const actualInvTotals = [89.39, 97.42, 127.20, 117.64];
+const totalInvApr = 117.64;
+
+// Pie: top vendors inventory share (Apr) + Others for remaining 727 vendors
 const invVendors = vendors.filter(v => v.inv[3] > 0).sort((a,b) => b.inv[3] - a.inv[3]);
-const totalInvApr = invVendors.reduce((s,v) => s + v.inv[3], 0);
+const tracked45Inv = invVendors.reduce((s,v) => s + v.inv[3], 0);
 const topN = 10;
 const topVendors = invVendors.slice(0, topN);
-const othersInv = invVendors.slice(topN).reduce((s,v) => s + v.inv[3], 0);
+const rest45 = invVendors.slice(topN).reduce((s,v) => s + v.inv[3], 0);
+const othersInv = totalInvApr - topVendors.reduce((s,v) => s + v.inv[3], 0);
 const pieLabels = topVendors.map(v => v.name.length > 25 ? v.name.substring(0,22) + '...' : v.name);
 const pieData = topVendors.map(v => v.inv[3]);
-if (othersInv > 0) { pieLabels.push('Others (' + (invVendors.length - topN) + ' vendors)'); pieData.push(othersInv); }
+if (othersInv > 0) { pieLabels.push('Others (' + (772 - topN) + ' vendors)'); pieData.push(parseFloat(othersInv.toFixed(2))); }
 const pieColors = ['#E74C3C','#27AE60','#FF5A00','#3498DB','#F39C12','#8E44AD','#1ABC9C','#E67E22','#2ECC71','#9B59B6','#95A5A6'];
 
 new Chart(document.getElementById('chartInvPie'), {
@@ -814,26 +815,28 @@ new Chart(document.getElementById('chartInvPie'), {
   }
 });
 
-// Why did inventory change? — show top drivers for each period
-const periods = [
-  { label: "Jan → Feb", from: 0, to: 1 },
-  { label: "Feb → Mar", from: 1, to: 2 },
-  { label: "Mar → Apr", from: 2, to: 3 }
+// Why did inventory change? — actual totals + top vendor drivers
+const invPeriods = [
+  { label: "Jan → Feb", from: 0, to: 1, actualFrom: 89.39, actualTo: 97.42 },
+  { label: "Feb → Mar", from: 1, to: 2, actualFrom: 97.42, actualTo: 127.20 },
+  { label: "Mar → Apr", from: 2, to: 3, actualFrom: 127.20, actualTo: 117.64 }
 ];
 let whyHtml = '';
-periods.forEach(p => {
-  const changes = vendors.map(v => ({ name: v.name, prev: v.inv[p.from], curr: v.inv[p.to], delta: v.inv[p.to] - v.inv[p.from] })).filter(c => Math.abs(c.delta) > 0.01);
-  const totalDelta = changes.reduce((s,c) => s + c.delta, 0);
+invPeriods.forEach(p => {
+  const totalDelta = p.actualTo - p.actualFrom;
   const direction = totalDelta > 0 ? 'increased' : 'decreased';
   const color = totalDelta > 0 ? 'var(--red)' : 'var(--green)';
   const arrow = totalDelta > 0 ? '&#9650;' : '&#9660;';
+  const pctChange = ((totalDelta / p.actualFrom) * 100).toFixed(1);
 
-  const topUp = changes.filter(c => c.delta > 0.1).sort((a,b) => b.delta - a.delta).slice(0,3);
-  const topDown = changes.filter(c => c.delta < -0.1).sort((a,b) => a.delta - b.delta).slice(0,3);
+  const changes = vendors.map(v => ({ name: v.name, delta: v.inv[p.to] - v.inv[p.from] })).filter(c => Math.abs(c.delta) > 0.1);
+  const topUp = changes.filter(c => c.delta > 0).sort((a,b) => b.delta - a.delta).slice(0,3);
+  const topDown = changes.filter(c => c.delta < 0).sort((a,b) => a.delta - b.delta).slice(0,3);
 
   whyHtml += '<div style="margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;">';
   whyHtml += '<div style="font-weight:700;font-size:14px;margin-bottom:8px;color:var(--navy);">' + p.label + '</div>';
-  whyHtml += '<div style="font-size:13px;margin-bottom:10px;">Total inventory <strong style="color:' + color + '">' + arrow + ' ' + direction + ' by ' + Math.abs(totalDelta).toFixed(2) + 'M</strong></div>';
+  whyHtml += '<div style="font-size:13px;margin-bottom:4px;">' + p.actualFrom.toFixed(2) + 'M &rarr; ' + p.actualTo.toFixed(2) + 'M</div>';
+  whyHtml += '<div style="font-size:13px;margin-bottom:10px;">Total inventory <strong style="color:' + color + '">' + arrow + ' ' + direction + ' by ' + Math.abs(totalDelta).toFixed(2) + 'M (' + (totalDelta > 0 ? '+' : '') + pctChange + '%)</strong></div>';
 
   if (topUp.length > 0) {
     whyHtml += '<div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px;">Top Increases:</div>';
