@@ -27,32 +27,64 @@
   /* Q&A Section */
   .qa-section { margin-bottom: 24px; }
   .qa-card {
-    background: var(--card); border-radius: 12px; padding: 20px 24px;
+    background: var(--card); border-radius: 12px; padding: 24px 28px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
   }
-  .qa-question {
-    font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 14px;
-    display: flex; align-items: center; gap: 8px;
+  .qa-input-row {
+    display: flex; gap: 12px; margin-bottom: 16px; align-items: center;
   }
-  .qa-question .q-icon {
-    background: var(--blue); color: #fff; width: 22px; height: 22px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  .qa-input-row .q-icon {
+    background: var(--blue); color: #fff; width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
   }
-  .qa-answer-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  .qa-input {
+    flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px;
+    font-size: 14px; font-family: inherit; color: var(--text); font-weight: 500;
+    background: #FAFBFC; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .qa-metric {
-    background: var(--bg); border-radius: 10px; padding: 14px 16px; text-align: center;
+  .qa-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(255,90,0,0.1); }
+  .qa-input::placeholder { color: var(--text-light); font-weight: 400; }
+  .qa-btn {
+    padding: 12px 24px; background: var(--blue); color: #fff; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: background 0.2s;
   }
-  .qa-metric-label {
-    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 6px;
+  .qa-btn:hover { background: var(--blue-light); }
+  .qa-answer { display: none; }
+  .qa-answer.visible { display: block; }
+  .qa-answer-label {
+    font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .qa-metric-value { font-size: 22px; font-weight: 700; }
-  .qa-metric-value.negative { color: var(--red); }
-  .qa-metric-value.positive { color: var(--green); }
-  .qa-metric-value.neutral { color: var(--navy); }
-  .qa-metric-sub { font-size: 11px; color: var(--text-light); margin-top: 4px; }
-  @media (max-width: 768px) { .qa-answer-grid { grid-template-columns: 1fr 1fr; } }
+  .qa-answer-label .a-icon {
+    background: var(--green); color: #fff; width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+  }
+  .qa-answer-table {
+    width: 100%; border-collapse: collapse; background: var(--bg); border-radius: 10px; overflow: hidden;
+  }
+  .qa-answer-table th {
+    background: var(--navy); color: #fff; padding: 10px 16px; font-size: 12px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;
+  }
+  .qa-answer-table td {
+    padding: 12px 16px; text-align: center; font-size: 15px; font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .qa-answer-table tr:last-child td { border-bottom: none; }
+  .qa-answer-table td:first-child { font-weight: 500; color: var(--text-light); text-align: left; }
+  .qa-answer-total { font-weight: 700 !important; background: var(--accent) !important; border-top: 2px solid var(--blue-light) !important; }
+  .qa-hint {
+    margin-top: 12px; font-size: 11px; color: var(--text-light);
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .qa-hint-tag {
+    display: inline-block; padding: 3px 10px; border-radius: 12px; background: var(--accent);
+    color: var(--blue); font-weight: 600; font-size: 11px; cursor: pointer; transition: background 0.2s;
+  }
+  .qa-hint-tag:hover { background: #FFD6B3; }
+  .qa-no-match { color: var(--red); font-size: 13px; font-weight: 500; padding: 12px 0; }
+  @media (max-width: 768px) { .qa-input-row { flex-direction: column; } .qa-btn { width: 100%; } }
 
   /* Top Nav */
   .top-nav {
@@ -281,31 +313,22 @@
 
   <!-- Q&A Insights -->
   <div class="qa-section">
-    <div class="section-title"><span class="icon"></span> Key Insights</div>
+    <div class="section-title"><span class="icon"></span> Ask the Dashboard</div>
     <div class="qa-card">
-      <div class="qa-question"><span class="q-icon">Q</span> What is the total Purchase, Inventory, COGS and Vendor Balance?</div>
-      <div class="qa-answer-grid">
-        <div class="qa-metric">
-          <div class="qa-metric-label">Total Purchase</div>
-          <div class="qa-metric-value neutral" id="qaPurchase">—</div>
-          <div class="qa-metric-sub" id="qaPurchaseSub"></div>
-        </div>
-        <div class="qa-metric">
-          <div class="qa-metric-label">Total Inventory</div>
-          <div class="qa-metric-value positive" id="qaInventory">—</div>
-          <div class="qa-metric-sub" id="qaInventorySub"></div>
-        </div>
-        <div class="qa-metric">
-          <div class="qa-metric-label">Total COGS</div>
-          <div class="qa-metric-value neutral" id="qaCogs">—</div>
-          <div class="qa-metric-sub" id="qaCogsSub"></div>
-        </div>
-        <div class="qa-metric">
-          <div class="qa-metric-label">Total Vendor Balance</div>
-          <div class="qa-metric-value negative" id="qaVendorBal">—</div>
-          <div class="qa-metric-sub" id="qaVendorBalSub"></div>
-        </div>
+      <div class="qa-input-row">
+        <span class="q-icon">Q</span>
+        <input type="text" id="qaInput" class="qa-input" placeholder="Type your question... e.g. What is the total inventory?">
+        <button class="qa-btn" id="qaAskBtn">Ask</button>
       </div>
+      <div class="qa-hint">
+        Try:
+        <span class="qa-hint-tag" onclick="askQuestion('total purchase')">Total Purchase</span>
+        <span class="qa-hint-tag" onclick="askQuestion('total inventory')">Total Inventory</span>
+        <span class="qa-hint-tag" onclick="askQuestion('total cogs')">Total COGS</span>
+        <span class="qa-hint-tag" onclick="askQuestion('total vendor balance')">Total Vendor Balance</span>
+        <span class="qa-hint-tag" onclick="askQuestion('total purchase, inventory, cogs and vendor balance')">All Totals</span>
+      </div>
+      <div class="qa-answer" id="qaAnswer"></div>
     </div>
   </div>
 
@@ -738,26 +761,75 @@ const vendors = rawVendors.map((r,i) => ({
 }));
 
 // ===== Q&A INSIGHTS =====
-function updateQA() {
-  const mi = 3; // Apr index (latest month)
-  const pi = 2; // Mar index (previous month)
-  let tPur=0, tInv=0, tCog=0, tVB=0, pPur=0, pInv=0, pCog=0, pVB=0;
+function getMonthlyTotals() {
+  const totals = { purchase: [0,0,0,0], inventory: [0,0,0,0], cogs: [0,0,0,0], vendorBalance: [0,0,0,0] };
   vendors.forEach(v => {
-    tPur += v.pur[mi]; tInv += v.inv[mi]; tCog += v.cog[mi]; tVB += v.vb[mi];
-    pPur += v.pur[pi]; pInv += v.inv[pi]; pCog += v.cog[pi]; pVB += v.vb[pi];
+    for (let i = 0; i < 4; i++) {
+      totals.purchase[i] += v.pur[i];
+      totals.inventory[i] += v.inv[i];
+      totals.cogs[i] += v.cog[i];
+      totals.vendorBalance[i] += v.vb[i];
+    }
   });
-  const fmt = v => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + 'M';
-  const chg = (c, p) => { const d = c - p; return (d >= 0 ? '+' : '') + d.toFixed(2) + 'M vs Mar'; };
-  document.getElementById('qaPurchase').textContent = fmt(tPur);
-  document.getElementById('qaInventory').textContent = fmt(tInv);
-  document.getElementById('qaCogs').textContent = fmt(tCog);
-  document.getElementById('qaVendorBal').textContent = fmt(tVB);
-  document.getElementById('qaPurchaseSub').textContent = chg(tPur, pPur);
-  document.getElementById('qaInventorySub').textContent = chg(tInv, pInv);
-  document.getElementById('qaCogsSub').textContent = chg(tCog, pCog);
-  document.getElementById('qaVendorBalSub').textContent = chg(tVB, pVB);
+  return totals;
 }
-updateQA();
+
+function buildAnswerTable(label, values) {
+  const fmt = v => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + 'M';
+  const total = values.reduce((s, v) => s + v, 0);
+  return '<table class="qa-answer-table">' +
+    '<thead><tr><th style="text-align:left">' + label + '</th>' +
+    months.map(m => '<th>' + m + '</th>').join('') +
+    '<th>Total</th></tr></thead>' +
+    '<tbody><tr>' +
+    '<td>' + label + '</td>' +
+    values.map(v => '<td>' + fmt(v) + '</td>').join('') +
+    '<td class="qa-answer-total">' + fmt(total) + '</td>' +
+    '</tr></tbody></table>';
+}
+
+function processQuestion(q) {
+  const lower = q.toLowerCase();
+  const totals = getMonthlyTotals();
+  const matched = [];
+
+  if (lower.includes('purchase')) matched.push({ label: 'Purchase', values: totals.purchase });
+  if (lower.includes('inventory')) matched.push({ label: 'Inventory', values: totals.inventory });
+  if (lower.includes('cogs') || lower.includes('cog') || lower.includes('cost of good')) matched.push({ label: 'COGS', values: totals.cogs });
+  if (lower.includes('vendor') || lower.includes('balance')) matched.push({ label: 'Vendor Balance', values: totals.vendorBalance });
+  if (lower.includes('all') && matched.length === 0) {
+    matched.push({ label: 'Purchase', values: totals.purchase });
+    matched.push({ label: 'Inventory', values: totals.inventory });
+    matched.push({ label: 'COGS', values: totals.cogs });
+    matched.push({ label: 'Vendor Balance', values: totals.vendorBalance });
+  }
+
+  const answerDiv = document.getElementById('qaAnswer');
+  if (matched.length === 0) {
+    answerDiv.innerHTML = '<div class="qa-no-match">Sorry, I couldn\'t understand the question. Try asking about Purchase, Inventory, COGS, or Vendor Balance.</div>';
+  } else {
+    let html = '<div class="qa-answer-label"><span class="a-icon">A</span> Answer</div>';
+    matched.forEach(m => { html += buildAnswerTable(m.label, m.values); html += '<div style="height:10px"></div>'; });
+    answerDiv.innerHTML = html;
+  }
+  answerDiv.classList.add('visible');
+}
+
+function askQuestion(text) {
+  document.getElementById('qaInput').value = text;
+  processQuestion(text);
+}
+
+document.getElementById('qaAskBtn').addEventListener('click', function() {
+  const q = document.getElementById('qaInput').value.trim();
+  if (q) processQuestion(q);
+});
+document.getElementById('qaInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const q = this.value.trim();
+    if (q) processQuestion(q);
+  }
+});
 
 // ===== CHART SETUP =====
 const commonOptions = {
