@@ -332,25 +332,15 @@
     </div>
   </div>
 
-  <!-- Totals Per Month & Movement -->
-  <div class="section-title"><span class="icon"></span> Totals Per Month &amp; Movement Overview</div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">Totals Per Month (AED M)</div>
-      <div class="chart-wrap-lg"><canvas id="chartTotalsPerMonth"></canvas></div>
-      <table style="margin-top:14px;">
-        <thead><tr><th>Metric</th><th class="num">Jan'26</th><th class="num">Feb'26</th><th class="num">Mar'26</th><th class="num">Apr'26</th></tr></thead>
-        <tbody id="totalsPerMonthBody"></tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title">Vendor Balance Movement (Mar &rarr; Apr)</div>
-      <div class="chart-wrap-lg"><canvas id="chartMovementOverview"></canvas></div>
-      <table style="margin-top:14px;">
-        <thead><tr><th>Movement</th><th class="num">Count</th><th class="num">%</th></tr></thead>
-        <tbody id="movementOverviewBody"></tbody>
-      </table>
-    </div>
+  <!-- Totals Per Month -->
+  <div class="section-title"><span class="icon"></span> Totals Per Month</div>
+  <div class="card">
+    <div class="card-title">Totals Per Month (AED M)</div>
+    <div class="chart-wrap-lg"><canvas id="chartTotalsPerMonth"></canvas></div>
+    <table style="margin-top:14px;">
+      <thead><tr><th>Metric</th><th class="num">Jan'26</th><th class="num">Feb'26</th><th class="num">Mar'26</th><th class="num">Apr'26</th></tr></thead>
+      <tbody id="totalsPerMonthBody"></tbody>
+    </table>
   </div>
 
   <!-- Group Breakdown + Movement Analysis -->
@@ -754,43 +744,6 @@ tpmMetrics.forEach(m => {
   tpmHtml += '</tr>';
 });
 tpmBody.innerHTML = tpmHtml;
-
-// ===== MOVEMENT OVERVIEW CHART =====
-let movIncrease=0, movDecrease=0, movNoChange=0;
-vendors.forEach(v => {
-  if (v.movVB === 'Increase') movIncrease++;
-  else if (v.movVB === 'Decrease') movDecrease++;
-  else movNoChange++;
-});
-const movTotal = vendors.length;
-
-new Chart(document.getElementById('chartMovementOverview'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Increase', 'Decrease', 'No Change'],
-    datasets: [{
-      data: [movIncrease, movDecrease, movNoChange],
-      backgroundColor: ['#E74C3C', '#27AE60', '#95A5A6'],
-      borderWidth: 2, borderColor: '#fff'
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    cutout: '55%',
-    plugins: {
-      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 12 }, padding: 14, usePointStyle: true } },
-      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' vendors (' + (ctx.parsed / movTotal * 100).toFixed(1) + '%)' } }
-    }
-  }
-});
-
-// Movement table
-const movBody = document.getElementById('movementOverviewBody');
-movBody.innerHTML =
-  '<tr><td><span class="badge increase">Increase &#9650;</span></td><td class="num">' + movIncrease + '</td><td class="num">' + (movIncrease/movTotal*100).toFixed(1) + '%</td></tr>' +
-  '<tr><td><span class="badge decrease">Decrease &#9660;</span></td><td class="num">' + movDecrease + '</td><td class="num">' + (movDecrease/movTotal*100).toFixed(1) + '%</td></tr>' +
-  '<tr><td><span class="badge nochange">No Change</span></td><td class="num">' + movNoChange + '</td><td class="num">' + (movNoChange/movTotal*100).toFixed(1) + '%</td></tr>' +
-  '<tr class="total-row"><td style="font-weight:700">Total</td><td class="num" style="font-weight:700">' + movTotal + '</td><td class="num" style="font-weight:700">100%</td></tr>';
 
 // Group Doughnut (dynamic)// Group Doughnut (dynamic)
 const groupChart = new Chart(document.getElementById('chartGroup'), {
