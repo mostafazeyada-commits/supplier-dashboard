@@ -305,12 +305,6 @@
     <div class="sub">Talabat &mdash; Finance &amp; Accounts Payable</div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;">
-    <select id="kpiMonthFilter" style="padding:8px 16px;border:none;border-radius:20px;font-size:13px;font-family:inherit;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;outline:none;cursor:pointer;">
-      <option value="3" selected style="color:#313131;">Apr'26</option>
-      <option value="2" style="color:#313131;">Mar'26</option>
-      <option value="1" style="color:#313131;">Feb'26</option>
-      <option value="0" style="color:#313131;">Jan'26</option>
-    </select>
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" style="height:36px;">
       <rect width="160" height="40" rx="8" fill="rgba(255,255,255,0.15)"/>
       <text x="80" y="27" text-anchor="middle" fill="#fff" font-family="'Segoe UI',Tahoma,sans-serif" font-size="20" font-weight="700" letter-spacing="2">talabat</text>
@@ -319,6 +313,19 @@
 </div>
 
 <div class="container">
+
+  <!-- Month Filter -->
+  <div style="display:flex;justify-content:center;margin-bottom:20px;">
+    <div style="background:var(--card);border-radius:12px;padding:12px 28px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:12px;border-top:3px solid var(--blue);">
+      <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);">Select Month</span>
+      <select id="kpiMonthFilter" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;font-weight:600;color:var(--text);background:#FAFBFC;outline:none;cursor:pointer;min-width:140px;">
+        <option value="3" selected>Apr'26</option>
+        <option value="2">Mar'26</option>
+        <option value="1">Feb'26</option>
+        <option value="0">Jan'26</option>
+      </select>
+    </div>
+  </div>
 
   <!-- KPI Cards -->
   <div class="kpi-row">
