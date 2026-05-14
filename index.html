@@ -375,6 +375,18 @@
     </table>
   </div>
 
+  <!-- Inventory Analysis -->
+  <div class="section-title"><span class="icon"></span> Inventory Analysis</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Inventory Share by Vendor &mdash; Apr'26</div>
+      <div style="position:relative;height:400px;"><canvas id="chartInvPie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Why Did Inventory Change?</div>
+      <div id="invWhySection"></div>
+    </div>
+  </div>
 
   <!-- Group Breakdown + Movement Analysis -->
   <div class="section-title"><span class="icon"></span> Breakdown &amp; Movement Analysis</div>
@@ -778,7 +790,68 @@ tpmMetrics.forEach(m => {
 });
 tpmBody.innerHTML = tpmHtml;
 
-// Group Doughnut (dynamic)// Group Doughnut (dynamic)
+// ===== INVENTORY ANALYSIS =====
+// Pie: all vendors inventory share (Apr)
+const invVendors = vendors.filter(v => v.inv[3] > 0).sort((a,b) => b.inv[3] - a.inv[3]);
+const totalInvApr = invVendors.reduce((s,v) => s + v.inv[3], 0);
+const topN = 10;
+const topVendors = invVendors.slice(0, topN);
+const othersInv = invVendors.slice(topN).reduce((s,v) => s + v.inv[3], 0);
+const pieLabels = topVendors.map(v => v.name.length > 25 ? v.name.substring(0,22) + '...' : v.name);
+const pieData = topVendors.map(v => v.inv[3]);
+if (othersInv > 0) { pieLabels.push('Others (' + (invVendors.length - topN) + ' vendors)'); pieData.push(othersInv); }
+const pieColors = ['#E74C3C','#27AE60','#FF5A00','#3498DB','#F39C12','#8E44AD','#1ABC9C','#E67E22','#2ECC71','#9B59B6','#95A5A6'];
+
+new Chart(document.getElementById('chartInvPie'), {
+  type: 'doughnut',
+  data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 2, borderColor: '#fff' }] },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '40%',
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 10 }, padding: 8, usePointStyle: true, boxWidth: 8 } },
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed.toFixed(2) + 'M (' + (ctx.parsed/totalInvApr*100).toFixed(1) + '%)' } }
+    }
+  }
+});
+
+// Why did inventory change? — show top drivers for each period
+const periods = [
+  { label: "Jan → Feb", from: 0, to: 1 },
+  { label: "Feb → Mar", from: 1, to: 2 },
+  { label: "Mar → Apr", from: 2, to: 3 }
+];
+let whyHtml = '';
+periods.forEach(p => {
+  const changes = vendors.map(v => ({ name: v.name, prev: v.inv[p.from], curr: v.inv[p.to], delta: v.inv[p.to] - v.inv[p.from] })).filter(c => Math.abs(c.delta) > 0.01);
+  const totalDelta = changes.reduce((s,c) => s + c.delta, 0);
+  const direction = totalDelta > 0 ? 'increased' : 'decreased';
+  const color = totalDelta > 0 ? 'var(--red)' : 'var(--green)';
+  const arrow = totalDelta > 0 ? '&#9650;' : '&#9660;';
+
+  const topUp = changes.filter(c => c.delta > 0.1).sort((a,b) => b.delta - a.delta).slice(0,3);
+  const topDown = changes.filter(c => c.delta < -0.1).sort((a,b) => a.delta - b.delta).slice(0,3);
+
+  whyHtml += '<div style="margin-bottom:18px;padding:14px;background:var(--bg);border-radius:10px;">';
+  whyHtml += '<div style="font-weight:700;font-size:14px;margin-bottom:8px;color:var(--navy);">' + p.label + '</div>';
+  whyHtml += '<div style="font-size:13px;margin-bottom:10px;">Total inventory <strong style="color:' + color + '">' + arrow + ' ' + direction + ' by ' + Math.abs(totalDelta).toFixed(2) + 'M</strong></div>';
+
+  if (topUp.length > 0) {
+    whyHtml += '<div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px;">Top Increases:</div>';
+    topUp.forEach(c => {
+      whyHtml += '<div style="font-size:12px;padding:2px 0;display:flex;justify-content:space-between;"><span>' + c.name + '</span><span style="font-weight:600;color:var(--red);">+' + c.delta.toFixed(2) + 'M</span></div>';
+    });
+  }
+  if (topDown.length > 0) {
+    whyHtml += '<div style="font-size:12px;font-weight:600;color:var(--green);margin-top:6px;margin-bottom:4px;">Top Decreases:</div>';
+    topDown.forEach(c => {
+      whyHtml += '<div style="font-size:12px;padding:2px 0;display:flex;justify-content:space-between;"><span>' + c.name + '</span><span style="font-weight:600;color:var(--green);">' + c.delta.toFixed(2) + 'M</span></div>';
+    });
+  }
+  whyHtml += '</div>';
+});
+document.getElementById('invWhySection').innerHTML = whyHtml;
+
+// Group Doughnut (dynamic)
 const groupChart = new Chart(document.getElementById('chartGroup'), {
   type: 'doughnut',
   data: {
