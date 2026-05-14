@@ -227,6 +227,20 @@
 
 <div class="container">
 
+<!-- Month Filter -->
+<div style="display:flex;justify-content:center;margin-bottom:20px;">
+  <div style="background:var(--card);border-radius:12px;padding:12px 28px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;align-items:center;gap:12px;border-top:3px solid var(--blue);">
+    <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-light);">Select Month</span>
+    <select id="kpiMonthFilter" style="padding:10px 20px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;font-weight:600;color:var(--text);background:#FAFBFC;outline:none;cursor:pointer;min-width:140px;">
+      <option value="All" selected>All Months</option>
+      <option value="Apr">Apr'26</option>
+      <option value="Mar">Mar'26</option>
+      <option value="Feb">Feb'26</option>
+      <option value="Jan">Jan'26</option>
+    </select>
+  </div>
+</div>
+
 <!-- KPI Cards (rendered by JS) -->
 <div class="kpi-row" id="kpiRow"></div>
 
@@ -990,12 +1004,28 @@ const totalAbs=RAW.reduce((s,r)=>s+Math.abs(r[2]||0)+Math.abs(r[3]||0),0);
 const avgTxn=totalAbs/txnCount;
 
 // === KPI CARDS ===
-document.getElementById("kpiRow").innerHTML=`
-<div class="kpi-card positive"><div class="kpi-label">Total Inflow</div><div class="kpi-value">${fmtM(totalInflow)} AED</div><div class="kpi-delta up">&#9650; Debit transactions</div></div>
-<div class="kpi-card negative"><div class="kpi-label">Total Outflow</div><div class="kpi-value">${fmtM(Math.abs(totalOutflow))} AED</div><div class="kpi-delta down">&#9660; Credit transactions</div></div>
-<div class="kpi-card" style="border-top-color:var(--orange)"><div class="kpi-label">Net Cash Flow</div><div class="kpi-value">${fmtM(netCF)} AED</div><div class="kpi-delta ${netCF>=0?"up":"down"}">${netCF>=0?"&#9650;":"&#9660;"} Inflow - Outflow</div></div>
-<div class="kpi-card count-card"><div class="kpi-label">Transaction Count</div><div class="kpi-value">${txnCount}</div><div class="kpi-delta" style="color:var(--text-light)">Jan - Apr 2026</div></div>
-<div class="kpi-card neutral"><div class="kpi-label">Avg Transaction</div><div class="kpi-value">${fmtM(avgTxn)} AED</div><div class="kpi-delta" style="color:var(--text-light)">Average absolute amount</div></div>`;
+function renderKPIs(month) {
+  let kInflow=0, kOutflow=0, kCount=0, kTotalAbs=0;
+  RAW.forEach(r => {
+    if (month !== 'All' && r[5] !== month) return;
+    const debit=r[2]||0, credit=r[3]||0;
+    if (debit>0) kInflow+=debit;
+    if (credit<0) kOutflow+=credit;
+    kTotalAbs+=Math.abs(debit)+Math.abs(credit);
+    kCount++;
+  });
+  const kNet=kInflow+kOutflow;
+  const kAvg=kCount>0?kTotalAbs/kCount:0;
+  const periodLabel=month==='All'?'Jan - Apr 2026':month+"'26";
+  document.getElementById("kpiRow").innerHTML=
+    '<div class="kpi-card positive"><div class="kpi-label">Total Inflow</div><div class="kpi-value">'+fmtM(kInflow)+' AED</div><div class="kpi-delta up">&#9650; Debit transactions</div></div>'+
+    '<div class="kpi-card negative"><div class="kpi-label">Total Outflow</div><div class="kpi-value">'+fmtM(Math.abs(kOutflow))+' AED</div><div class="kpi-delta down">&#9660; Credit transactions</div></div>'+
+    '<div class="kpi-card" style="border-top-color:var(--orange)"><div class="kpi-label">Net Cash Flow</div><div class="kpi-value">'+fmtM(kNet)+' AED</div><div class="kpi-delta '+(kNet>=0?'up':'down')+'">'+(kNet>=0?'&#9650;':'&#9660;')+' Inflow - Outflow</div></div>'+
+    '<div class="kpi-card count-card"><div class="kpi-label">Transaction Count</div><div class="kpi-value">'+kCount+'</div><div class="kpi-delta" style="color:var(--text-light)">'+periodLabel+'</div></div>'+
+    '<div class="kpi-card neutral"><div class="kpi-label">Avg Transaction</div><div class="kpi-value">'+fmtM(kAvg)+' AED</div><div class="kpi-delta" style="color:var(--text-light)">Average absolute amount</div></div>';
+}
+renderKPIs('All');
+document.getElementById('kpiMonthFilter').addEventListener('change', function(){ renderKPIs(this.value); });
 
 // === POPULATE CATEGORY FILTER ===
 const catSel=document.getElementById("fCategory");
