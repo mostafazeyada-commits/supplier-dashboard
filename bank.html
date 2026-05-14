@@ -253,13 +253,26 @@
 
 <!-- Category Breakdown -->
 <div class="section-title"><span class="icon"></span> Category Breakdown</div>
+<div style="margin-bottom:16px;display:flex;align-items:center;gap:14px;">
+  <div class="filter-card" style="flex:0 0 auto;padding:12px 18px;border-top:3px solid var(--green);flex-direction:row;align-items:center;gap:12px;">
+    <div class="filter-card-label" style="margin:0;"><span class="f-icon" style="background:var(--green);">M</span> Month</div>
+    <select id="catBreakdownMonth" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);font-weight:600;background:#FAFBFC;outline:none;min-width:150px;">
+      <option value="All" selected>All Months</option>
+      <option value="Jan">January</option>
+      <option value="Feb">February</option>
+      <option value="Mar">March</option>
+      <option value="Apr">April</option>
+    </select>
+  </div>
+  <span id="catBreakdownTag" class="filter-tag t-period" style="font-size:12px;padding:6px 14px;">All Months</span>
+</div>
 <div class="grid-2">
   <div class="card">
-    <div class="card-title">Top Inflow Categories (AED)</div>
+    <div class="card-title" id="catInflowTitle">Top Inflow Categories (AED) &mdash; All Months</div>
     <div class="chart-wrap-lg"><canvas id="chartCatInflow"></canvas></div>
   </div>
   <div class="card">
-    <div class="card-title">Top Outflow Categories (AED)</div>
+    <div class="card-title" id="catOutflowTitle">Top Outflow Categories (AED) &mdash; All Months</div>
     <div class="chart-wrap-lg"><canvas id="chartCatOutflow"></canvas></div>
   </div>
 </div>
@@ -1037,13 +1050,35 @@ const chartColors={green:"#27AE60",red:"#E74C3C",orange:"#FF5A00",orangeLight:"#
 // Monthly Cash Flow
 new Chart(document.getElementById("chartMonthlyCF"),{type:"bar",data:{labels:MONTHS,datasets:[{label:"Inflow",data:MONTHS.map(m=>monthInflow[m]),backgroundColor:chartColors.green,borderRadius:4},{label:"Outflow",data:MONTHS.map(m=>Math.abs(monthOutflow[m])),backgroundColor:chartColors.red,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:true,ticks:{callback:v=>fmtM(v)}}}}});
 
-// Category Bar Charts
-const catInflowSorted=Object.entries(catInflow).sort((a,b)=>b[1]-a[1]);
-const catOutflowSorted=Object.entries(catOutflow).sort((a,b)=>a[1]-b[1]);
+// Category Bar Charts (filterable)
+const catBarOpts={indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}};
+let catInflowChart=new Chart(document.getElementById("chartCatInflow"),{type:"bar",data:{labels:[],datasets:[{label:"Inflow (AED)",data:[],backgroundColor:chartColors.orange,borderRadius:4}]},options:catBarOpts});
+let catOutflowChart=new Chart(document.getElementById("chartCatOutflow"),{type:"bar",data:{labels:[],datasets:[{label:"Outflow (AED)",data:[],backgroundColor:chartColors.coral,borderRadius:4}]},options:catBarOpts});
 
-new Chart(document.getElementById("chartCatInflow"),{type:"bar",data:{labels:catInflowSorted.map(c=>c[0]),datasets:[{label:"Inflow (AED)",data:catInflowSorted.map(c=>c[1]),backgroundColor:chartColors.orange,borderRadius:4}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}}});
-
-new Chart(document.getElementById("chartCatOutflow"),{type:"bar",data:{labels:catOutflowSorted.map(c=>c[0]),datasets:[{label:"Outflow (AED)",data:catOutflowSorted.map(c=>Math.abs(c[1])),backgroundColor:chartColors.coral,borderRadius:4}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>fmtM(v)}}}}});
+function updateCatBreakdown(){
+  const mon=document.getElementById("catBreakdownMonth").value;
+  const label=mon==="All"?"All Months":mon+"'26";
+  document.getElementById("catBreakdownTag").textContent=label;
+  document.getElementById("catInflowTitle").innerHTML="Top Inflow Categories (AED) &mdash; "+label;
+  document.getElementById("catOutflowTitle").innerHTML="Top Outflow Categories (AED) &mdash; "+label;
+  const fIn={},fOut={};
+  RAW.forEach(r=>{
+    if(mon!=="All"&&r[5]!==mon)return;
+    const debit=r[2]||0,credit=r[3]||0,cat=r[4];
+    if(debit>0)fIn[cat]=(fIn[cat]||0)+debit;
+    if(credit<0)fOut[cat]=(fOut[cat]||0)+credit;
+  });
+  const sIn=Object.entries(fIn).sort((a,b)=>b[1]-a[1]);
+  const sOut=Object.entries(fOut).sort((a,b)=>a[1]-b[1]);
+  catInflowChart.data.labels=sIn.map(c=>c[0]);
+  catInflowChart.data.datasets[0].data=sIn.map(c=>c[1]);
+  catInflowChart.update();
+  catOutflowChart.data.labels=sOut.map(c=>c[0]);
+  catOutflowChart.data.datasets[0].data=sOut.map(c=>Math.abs(c[1]));
+  catOutflowChart.update();
+}
+updateCatBreakdown();
+document.getElementById("catBreakdownMonth").addEventListener("change",updateCatBreakdown);
 
 // Pie charts (filterable by month)
 const pieColors=["#FF5A00","#FF7A2E","#FF9A5C","#FFC09F","#27AE60","#2ECC71","#3498DB","#E74C3C","#9B59B6","#F39C12","#1ABC9C","#E67E22","#34495E","#95A5A6","#D35400","#C0392B"];
