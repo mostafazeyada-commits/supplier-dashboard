@@ -24,6 +24,36 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+  /* Q&A Section */
+  .qa-section { margin-bottom: 24px; }
+  .qa-card {
+    background: var(--card); border-radius: 12px; padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid var(--blue);
+  }
+  .qa-question {
+    font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .qa-question .q-icon {
+    background: var(--blue); color: #fff; width: 22px; height: 22px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .qa-answer-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  .qa-metric {
+    background: var(--bg); border-radius: 10px; padding: 14px 16px; text-align: center;
+  }
+  .qa-metric-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 6px;
+  }
+  .qa-metric-value { font-size: 22px; font-weight: 700; }
+  .qa-metric-value.negative { color: var(--red); }
+  .qa-metric-value.positive { color: var(--green); }
+  .qa-metric-value.neutral { color: var(--navy); }
+  .qa-metric-sub { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  @media (max-width: 768px) { .qa-answer-grid { grid-template-columns: 1fr 1fr; } }
+
   /* Top Nav */
   .top-nav {
     background: var(--navy); display: flex; align-items: center; padding: 0 24px; gap: 0;
@@ -246,6 +276,36 @@
       <div class="kpi-label">Total Vendors</div>
       <div class="kpi-value">772</div>
       <div class="kpi-delta" style="color:var(--text-light);">Vendor Balance Comparing</div>
+    </div>
+  </div>
+
+  <!-- Q&A Insights -->
+  <div class="qa-section">
+    <div class="section-title"><span class="icon"></span> Key Insights</div>
+    <div class="qa-card">
+      <div class="qa-question"><span class="q-icon">Q</span> What is the total Purchase, Inventory, COGS and Vendor Balance?</div>
+      <div class="qa-answer-grid">
+        <div class="qa-metric">
+          <div class="qa-metric-label">Total Purchase</div>
+          <div class="qa-metric-value neutral" id="qaPurchase">—</div>
+          <div class="qa-metric-sub" id="qaPurchaseSub"></div>
+        </div>
+        <div class="qa-metric">
+          <div class="qa-metric-label">Total Inventory</div>
+          <div class="qa-metric-value positive" id="qaInventory">—</div>
+          <div class="qa-metric-sub" id="qaInventorySub"></div>
+        </div>
+        <div class="qa-metric">
+          <div class="qa-metric-label">Total COGS</div>
+          <div class="qa-metric-value neutral" id="qaCogs">—</div>
+          <div class="qa-metric-sub" id="qaCogsSub"></div>
+        </div>
+        <div class="qa-metric">
+          <div class="qa-metric-label">Total Vendor Balance</div>
+          <div class="qa-metric-value negative" id="qaVendorBal">—</div>
+          <div class="qa-metric-sub" id="qaVendorBalSub"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -676,6 +736,28 @@ const vendors = rawVendors.map((r,i) => ({
   pur: [r[10],r[11],r[12],r[13]], cog: [r[14],r[15],r[16],r[17]],
   movVB: r[18], movInv: r[19]
 }));
+
+// ===== Q&A INSIGHTS =====
+function updateQA() {
+  const mi = 3; // Apr index (latest month)
+  const pi = 2; // Mar index (previous month)
+  let tPur=0, tInv=0, tCog=0, tVB=0, pPur=0, pInv=0, pCog=0, pVB=0;
+  vendors.forEach(v => {
+    tPur += v.pur[mi]; tInv += v.inv[mi]; tCog += v.cog[mi]; tVB += v.vb[mi];
+    pPur += v.pur[pi]; pInv += v.inv[pi]; pCog += v.cog[pi]; pVB += v.vb[pi];
+  });
+  const fmt = v => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + 'M';
+  const chg = (c, p) => { const d = c - p; return (d >= 0 ? '+' : '') + d.toFixed(2) + 'M vs Mar'; };
+  document.getElementById('qaPurchase').textContent = fmt(tPur);
+  document.getElementById('qaInventory').textContent = fmt(tInv);
+  document.getElementById('qaCogs').textContent = fmt(tCog);
+  document.getElementById('qaVendorBal').textContent = fmt(tVB);
+  document.getElementById('qaPurchaseSub').textContent = chg(tPur, pPur);
+  document.getElementById('qaInventorySub').textContent = chg(tInv, pInv);
+  document.getElementById('qaCogsSub').textContent = chg(tCog, pCog);
+  document.getElementById('qaVendorBalSub').textContent = chg(tVB, pVB);
+}
+updateQA();
 
 // ===== CHART SETUP =====
 const commonOptions = {
