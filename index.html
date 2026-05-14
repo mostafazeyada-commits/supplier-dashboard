@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -332,172 +332,23 @@
     </div>
   </div>
 
-  <!-- Variance Analysis Section -->
-  <div class="section-title"><span class="icon"></span> Month-over-Month Variance Analysis</div>
-  <div class="grid-3">
-    <div class="card">
-      <div class="card-title">MoM Variance &mdash; Amount (AED M)</div>
-      <div class="chart-wrap-lg"><canvas id="chartVarianceAmt"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">MoM Variance &mdash; Percentage (%)</div>
-      <div class="chart-wrap-lg"><canvas id="chartVariancePct"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Vendor Balance Variance Waterfall</div>
-      <div class="chart-wrap-lg"><canvas id="chartWaterfall"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Variance Detail Table -->
-  <div class="grid-2" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-title">Variance Summary &mdash; Amount (AED M)</div>
-      <table>
-        <thead>
-          <tr><th>Metric</th><th class="num">Jan &rarr; Feb</th><th class="num">Feb &rarr; Mar</th><th class="num">Mar &rarr; Apr</th><th class="num">Cumulative (Jan&rarr;Apr)</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Vendor Balance</td>
-            <td class="num negative-val">-24.27M</td>
-            <td class="num negative-val">-32.24M</td>
-            <td class="num positive-val">+16.99M</td>
-            <td class="num negative-val">-39.53M</td>
-          </tr>
-          <tr>
-            <td>Inventory</td>
-            <td class="num positive-val">+8.04M</td>
-            <td class="num positive-val">+29.78M</td>
-            <td class="num negative-val">-9.56M</td>
-            <td class="num positive-val">+28.25M</td>
-          </tr>
-          <tr>
-            <td>Purchase</td>
-            <td class="num positive-val">+11.20M</td>
-            <td class="num positive-val">+27.46M</td>
-            <td class="num negative-val">-41.23M</td>
-            <td class="num negative-val">-2.57M</td>
-          </tr>
-          <tr>
-            <td>COGs</td>
-            <td class="num positive-val">+5.39M</td>
-            <td class="num positive-val">+5.87M</td>
-            <td class="num negative-val">-3.69M</td>
-            <td class="num positive-val">+7.57M</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title">Variance Summary &mdash; Percentage (%)</div>
-      <table>
-        <thead>
-          <tr><th>Metric</th><th class="num">Jan &rarr; Feb</th><th class="num">Feb &rarr; Mar</th><th class="num">Mar &rarr; Apr</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Vendor Balance</td>
-            <td class="num negative-val">-13.0%</td>
-            <td class="num negative-val">-15.2%</td>
-            <td class="num positive-val">+7.0%</td>
-          </tr>
-          <tr>
-            <td>Inventory</td>
-            <td class="num positive-val">+9.0%</td>
-            <td class="num positive-val">+30.6%</td>
-            <td class="num negative-val">-7.5%</td>
-          </tr>
-          <tr>
-            <td>Purchase</td>
-            <td class="num positive-val">+9.3%</td>
-            <td class="num positive-val">+20.9%</td>
-            <td class="num negative-val">-26.0%</td>
-          </tr>
-          <tr>
-            <td>COGs</td>
-            <td class="num positive-val">+4.8%</td>
-            <td class="num positive-val">+5.0%</td>
-            <td class="num negative-val">-3.0%</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Monthly Trend Charts -->
-  <div class="section-title"><span class="icon"></span> Monthly Trend Analysis</div>
+  <!-- Totals Per Month & Movement -->
+  <div class="section-title"><span class="icon"></span> Totals Per Month &amp; Movement Overview</div>
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">Vendor Balance Trend (AED)</div>
-      <div class="chart-wrap"><canvas id="chartVendorBal"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Inventory Trend (AED)</div>
-      <div class="chart-wrap"><canvas id="chartInventory"></canvas></div>
-    </div>
-  </div>
-  <div class="grid-2" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-title">Purchase Trend (AED)</div>
-      <div class="chart-wrap"><canvas id="chartPurchase"></canvas></div>
-    </div>
-    <div class="card">
-      <div class="card-title">COGs Trend (AED)</div>
-      <div class="chart-wrap"><canvas id="chartCogs"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Monthly Trend Tables -->
-  <div class="grid-2" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-title">Vendor Balance &mdash; Monthly Detail</div>
-      <table>
-        <thead><tr><th>Month</th><th class="num">Balance</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
-        <tbody>
-          <tr><td>Jan'26</td><td class="num">-187.23M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
-          <tr><td>Feb'26</td><td class="num">-211.51M</td><td class="num negative-val">-24.27M</td><td class="num negative-val">-13.0%</td></tr>
-          <tr><td>Mar'26</td><td class="num">-243.75M</td><td class="num negative-val">-32.24M</td><td class="num negative-val">-15.2%</td></tr>
-          <tr><td>Apr'26</td><td class="num">-226.76M</td><td class="num positive-val">+16.99M</td><td class="num positive-val">+7.0%</td></tr>
-        </tbody>
+      <div class="card-title">Totals Per Month (AED M)</div>
+      <div class="chart-wrap-lg"><canvas id="chartTotalsPerMonth"></canvas></div>
+      <table style="margin-top:14px;">
+        <thead><tr><th>Metric</th><th class="num">Jan'26</th><th class="num">Feb'26</th><th class="num">Mar'26</th><th class="num">Apr'26</th></tr></thead>
+        <tbody id="totalsPerMonthBody"></tbody>
       </table>
     </div>
     <div class="card">
-      <div class="card-title">Inventory &mdash; Monthly Detail</div>
-      <table>
-        <thead><tr><th>Month</th><th class="num">Inventory</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
-        <tbody>
-          <tr><td>Jan'26</td><td class="num">89.39M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
-          <tr><td>Feb'26</td><td class="num">97.42M</td><td class="num positive-val">+8.04M</td><td class="num positive-val">+9.0%</td></tr>
-          <tr><td>Mar'26</td><td class="num">127.20M</td><td class="num positive-val">+29.78M</td><td class="num positive-val">+30.6%</td></tr>
-          <tr><td>Apr'26</td><td class="num">117.64M</td><td class="num negative-val">-9.56M</td><td class="num negative-val">-7.5%</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div class="grid-2" style="margin-top:16px;">
-    <div class="card">
-      <div class="card-title">Purchase &mdash; Monthly Detail</div>
-      <table>
-        <thead><tr><th>Month</th><th class="num">Purchase</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
-        <tbody>
-          <tr><td>Jan'26</td><td class="num">120.11M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
-          <tr><td>Feb'26</td><td class="num">131.31M</td><td class="num positive-val">+11.20M</td><td class="num positive-val">+9.3%</td></tr>
-          <tr><td>Mar'26</td><td class="num">158.78M</td><td class="num positive-val">+27.46M</td><td class="num positive-val">+20.9%</td></tr>
-          <tr><td>Apr'26</td><td class="num">117.54M</td><td class="num negative-val">-41.23M</td><td class="num negative-val">-26.0%</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card">
-      <div class="card-title">COGs &mdash; Monthly Detail</div>
-      <table>
-        <thead><tr><th>Month</th><th class="num">COGs</th><th class="num">MoM Change</th><th class="num">% Change</th></tr></thead>
-        <tbody>
-          <tr><td>Jan'26</td><td class="num">111.36M</td><td class="num">&mdash;</td><td class="num">&mdash;</td></tr>
-          <tr><td>Feb'26</td><td class="num">116.75M</td><td class="num positive-val">+5.39M</td><td class="num positive-val">+4.8%</td></tr>
-          <tr><td>Mar'26</td><td class="num">122.62M</td><td class="num positive-val">+5.87M</td><td class="num positive-val">+5.0%</td></tr>
-          <tr><td>Apr'26</td><td class="num">118.93M</td><td class="num negative-val">-3.69M</td><td class="num negative-val">-3.0%</td></tr>
-        </tbody>
+      <div class="card-title">Vendor Balance Movement (Mar &rarr; Apr)</div>
+      <div class="chart-wrap-lg"><canvas id="chartMovementOverview"></canvas></div>
+      <table style="margin-top:14px;">
+        <thead><tr><th>Movement</th><th class="num">Count</th><th class="num">%</th></tr></thead>
+        <tbody id="movementOverviewBody"></tbody>
       </table>
     </div>
   </div>
@@ -857,155 +708,91 @@ function makeGradient(ctx, r, g, b) {
   return grad;
 }
 
-// ===== VARIANCE CHARTS =====
-// Variance amounts
-const varAmts = {
-  vb: [-24.27, -32.24, 16.99],
-  inv: [8.04, 29.78, -9.56],
-  pur: [11.20, 27.46, -41.23],
-  cog: [5.39, 5.87, -3.69]
-};
-const varPcts = {
-  vb: [-13.0, -15.2, 7.0],
-  inv: [9.0, 30.6, -7.5],
-  pur: [9.3, 20.9, -26.0],
-  cog: [4.8, 5.0, -3.0]
-};
-const varLabels = ["Jan→Feb", "Feb→Mar", "Mar→Apr"];
+// ===== TOTALS PER MONTH CHART =====
+const monthlyTotals = { vb:[0,0,0,0], inv:[0,0,0,0], pur:[0,0,0,0], cog:[0,0,0,0] };
+vendors.forEach(v => {
+  for (let i=0;i<4;i++) { monthlyTotals.vb[i]+=v.vb[i]; monthlyTotals.inv[i]+=v.inv[i]; monthlyTotals.pur[i]+=v.pur[i]; monthlyTotals.cog[i]+=v.cog[i]; }
+});
 
-// Grouped bar: Variance Amount
-new Chart(document.getElementById('chartVarianceAmt'), {
+new Chart(document.getElementById('chartTotalsPerMonth'), {
   type: 'bar',
   data: {
-    labels: varLabels,
+    labels: months,
     datasets: [
-      { label: 'Vendor Balance', data: varAmts.vb, backgroundColor: '#E74C3C', borderRadius: 4, barPercentage: 0.7 },
-      { label: 'Inventory', data: varAmts.inv, backgroundColor: '#27AE60', borderRadius: 4, barPercentage: 0.7 },
-      { label: 'Purchase', data: varAmts.pur, backgroundColor: '#FF7A2E', borderRadius: 4, barPercentage: 0.7 },
-      { label: 'COGs', data: varAmts.cog, backgroundColor: '#F39C12', borderRadius: 4, barPercentage: 0.7 }
+      { label: 'Vendor Balance', data: monthlyTotals.vb, backgroundColor: '#E74C3C', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'Inventory', data: monthlyTotals.inv, backgroundColor: '#27AE60', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'Purchase', data: monthlyTotals.pur, backgroundColor: '#FF7A2E', borderRadius: 4, barPercentage: 0.7 },
+      { label: 'COGs', data: monthlyTotals.cog, backgroundColor: '#F39C12', borderRadius: 4, barPercentage: 0.7 }
     ]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
     plugins: {
       legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
-      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + 'M' } }
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + 'M' } }
     },
     scales: {
       x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
-      y: {
-        grid: { color: '#F0F0F0' },
-        ticks: { font: { family: fontFamily, size: 11 }, callback: v => (v > 0 ? '+' : '') + v + 'M' }
-      }
+      y: { grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 11 }, callback: v => v.toFixed(0) + 'M' } }
     }
   }
 });
 
-// Line: Variance %
-new Chart(document.getElementById('chartVariancePct'), {
-  type: 'line',
+// Totals per month table
+const fmt2 = v => (v < 0 ? '-' : '') + Math.abs(v).toFixed(2) + 'M';
+const tpmBody = document.getElementById('totalsPerMonthBody');
+const tpmMetrics = [
+  { label: 'Vendor Balance', data: monthlyTotals.vb, color: '#E74C3C' },
+  { label: 'Inventory', data: monthlyTotals.inv, color: '#27AE60' },
+  { label: 'Purchase', data: monthlyTotals.pur, color: '#FF7A2E' },
+  { label: 'COGs', data: monthlyTotals.cog, color: '#F39C12' }
+];
+let tpmHtml = '';
+tpmMetrics.forEach(m => {
+  tpmHtml += '<tr><td style="font-weight:600;color:' + m.color + '">' + m.label + '</td>';
+  m.data.forEach(v => { tpmHtml += '<td class="num">' + fmt2(v) + '</td>'; });
+  tpmHtml += '</tr>';
+});
+tpmBody.innerHTML = tpmHtml;
+
+// ===== MOVEMENT OVERVIEW CHART =====
+let movIncrease=0, movDecrease=0, movNoChange=0;
+vendors.forEach(v => {
+  if (v.movVB === 'Increase') movIncrease++;
+  else if (v.movVB === 'Decrease') movDecrease++;
+  else movNoChange++;
+});
+const movTotal = vendors.length;
+
+new Chart(document.getElementById('chartMovementOverview'), {
+  type: 'doughnut',
   data: {
-    labels: varLabels,
-    datasets: [
-      { label: 'Vendor Balance', data: varPcts.vb, borderColor: '#E74C3C', backgroundColor: 'rgba(231,76,60,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#E74C3C', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
-      { label: 'Inventory', data: varPcts.inv, borderColor: '#27AE60', backgroundColor: 'rgba(39,174,96,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#27AE60', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
-      { label: 'Purchase', data: varPcts.pur, borderColor: '#FF7A2E', backgroundColor: 'rgba(255,90,0,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#FF7A2E', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false },
-      { label: 'COGs', data: varPcts.cog, borderColor: '#F39C12', backgroundColor: 'rgba(243,156,18,0.08)', borderWidth: 3, pointRadius: 6, pointBackgroundColor: '#F39C12', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: false }
-    ]
+    labels: ['Increase', 'Decrease', 'No Change'],
+    datasets: [{
+      data: [movIncrease, movDecrease, movNoChange],
+      backgroundColor: ['#E74C3C', '#27AE60', '#95A5A6'],
+      borderWidth: 2, borderColor: '#fff'
+    }]
   },
   options: {
     responsive: true, maintainAspectRatio: false,
+    cutout: '55%',
     plugins: {
-      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
-      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y > 0 ? '+' : '') + ctx.parsed.y.toFixed(1) + '%' } }
-    },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
-      y: {
-        grid: { color: '#F0F0F0' },
-        ticks: { font: { family: fontFamily, size: 11 }, callback: v => (v > 0 ? '+' : '') + v + '%' }
-      }
+      legend: { position: 'bottom', labels: { font: { family: fontFamily, size: 12 }, padding: 14, usePointStyle: true } },
+      tooltip: { backgroundColor: '#313131', callbacks: { label: ctx => ctx.label + ': ' + ctx.parsed + ' vendors (' + (ctx.parsed / movTotal * 100).toFixed(1) + '%)' } }
     }
   }
 });
 
-// Waterfall: Vendor Balance
-const wfData = [-187.23, -24.27, -32.24, 16.99, -226.76];
-const wfColors = wfData.map((v,i) => {
-  if (i === 0 || i === 4) return '#FF5A00';
-  return v < 0 ? '#E74C3C' : '#27AE60';
-});
-const wfBases = [0, -187.23, -211.50, -243.75, 0];
-new Chart(document.getElementById('chartWaterfall'), {
-  type: 'bar',
-  data: {
-    labels: ["Jan'26", "Jan→Feb", "Feb→Mar", "Mar→Apr", "Apr'26"],
-    datasets: [
-      { label: 'Base', data: wfBases.map(v => Math.min(v, v + (wfData[wfBases.indexOf(v)] || 0))), backgroundColor: 'transparent', borderWidth: 0, barPercentage: 0.5 },
-      {
-        label: 'Change', data: wfData.map(v => Math.abs(v)),
-        backgroundColor: wfColors, borderRadius: 4, barPercentage: 0.5
-      }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#313131',
-        callbacks: { label: ctx => { if (ctx.datasetIndex === 0) return ''; const v = wfData[ctx.dataIndex]; return (v > 0 ? '+' : '') + v.toFixed(2) + 'M'; } }
-      }
-    },
-    scales: {
-      x: { stacked: true, grid: { display: false }, ticks: { font: { family: fontFamily, size: 11 } } },
-      y: { stacked: true, grid: { color: '#F0F0F0' }, ticks: { font: { family: fontFamily, size: 11 }, callback: v => v.toFixed(0) + 'M' } }
-    }
-  }
-});
+// Movement table
+const movBody = document.getElementById('movementOverviewBody');
+movBody.innerHTML =
+  '<tr><td><span class="badge increase">Increase &#9650;</span></td><td class="num">' + movIncrease + '</td><td class="num">' + (movIncrease/movTotal*100).toFixed(1) + '%</td></tr>' +
+  '<tr><td><span class="badge decrease">Decrease &#9660;</span></td><td class="num">' + movDecrease + '</td><td class="num">' + (movDecrease/movTotal*100).toFixed(1) + '%</td></tr>' +
+  '<tr><td><span class="badge nochange">No Change</span></td><td class="num">' + movNoChange + '</td><td class="num">' + (movNoChange/movTotal*100).toFixed(1) + '%</td></tr>' +
+  '<tr class="total-row"><td style="font-weight:700">Total</td><td class="num" style="font-weight:700">' + movTotal + '</td><td class="num" style="font-weight:700">100%</td></tr>';
 
-// ===== TREND CHARTS =====
-const ctxVB = document.getElementById('chartVendorBal').getContext('2d');
-new Chart(ctxVB, {
-  type: 'line',
-  data: {
-    labels: months,
-    datasets: [{ label: 'Vendor Balance', data: [-187.23,-211.51,-243.75,-226.76], borderColor: '#E74C3C', backgroundColor: makeGradient(ctxVB,231,76,60), borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#E74C3C', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: true }]
-  },
-  options: commonOptions
-});
-
-const ctxInv = document.getElementById('chartInventory').getContext('2d');
-new Chart(ctxInv, {
-  type: 'line',
-  data: {
-    labels: months,
-    datasets: [{ label: 'Inventory', data: [89.39,97.42,127.20,117.64], borderColor: '#27AE60', backgroundColor: makeGradient(ctxInv,39,174,96), borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#27AE60', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, fill: true }]
-  },
-  options: commonOptions
-});
-
-const ctxP = document.getElementById('chartPurchase').getContext('2d');
-new Chart(ctxP, {
-  type: 'bar',
-  data: {
-    labels: months,
-    datasets: [{ label: 'Purchase', data: [120.11,131.31,158.78,117.54], backgroundColor: ['#FF7A2E','#FF7A2E','#FF7A2E','#FF5A00'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
-  },
-  options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
-});
-
-const ctxC = document.getElementById('chartCogs').getContext('2d');
-new Chart(ctxC, {
-  type: 'bar',
-  data: {
-    labels: months,
-    datasets: [{ label: 'COGs', data: [111.36,116.75,122.62,118.93], backgroundColor: ['#F39C12','#F39C12','#F39C12','#E64D00'], borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
-  },
-  options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, beginAtZero: true } } }
-});
-
-// Group Doughnut (dynamic)
+// Group Doughnut (dynamic)// Group Doughnut (dynamic)
 const groupChart = new Chart(document.getElementById('chartGroup'), {
   type: 'doughnut',
   data: {
