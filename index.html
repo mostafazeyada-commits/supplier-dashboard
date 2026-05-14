@@ -86,6 +86,38 @@
   .qa-no-match { color: var(--red); font-size: 13px; font-weight: 500; padding: 12px 0; }
   @media (max-width: 768px) { .qa-input-row { flex-direction: column; } .qa-btn { width: 100%; } }
 
+  /* Info Box */
+  .info-box {
+    background: var(--card); border-radius: 12px; padding: 22px 26px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid #3498DB;
+    margin-bottom: 20px;
+  }
+  .info-box-title {
+    font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .info-box-title .info-icon {
+    background: #3498DB; color: #fff; width: 24px; height: 24px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .info-item {
+    background: var(--bg); border-radius: 10px; padding: 14px 16px;
+  }
+  .info-item-header {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .info-item-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .info-item-text strong { color: var(--navy); }
+  .info-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+  }
+  .info-badge.ib-inc { background: #FDEDED; color: #E74C3C; }
+  .info-badge.ib-dec { background: #E8F8EF; color: #27AE60; }
+  .info-badge.ib-nc { background: #F0F0F0; color: #7F8C8D; }
+  @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+
   /* Top Nav */
   .top-nav {
     background: var(--navy); display: flex; align-items: center; padding: 0 24px; gap: 0;
@@ -341,6 +373,34 @@
       <thead><tr><th>Metric</th><th class="num">Jan'26</th><th class="num">Feb'26</th><th class="num">Mar'26</th><th class="num">Apr'26</th></tr></thead>
       <tbody id="totalsPerMonthBody"></tbody>
     </table>
+  </div>
+
+  <!-- What is Movement? -->
+  <div class="info-box">
+    <div class="info-box-title"><span class="info-icon">i</span> What is Movement &amp; Where Does the Data Come From?</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-item-header" style="color:#3498DB;">Definition</div>
+        <div class="info-item-text">
+          <strong>Movement</strong> shows the direction of a vendor's balance change between two consecutive months. It compares the <strong>Vendor Balance</strong> of the current month vs. the previous month.
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-header" style="color:#E74C3C;">How It Works</div>
+        <div class="info-item-text">
+          A threshold of <strong>0.25M AED</strong> is applied:<br>
+          <span class="info-badge ib-inc">Increase</span> Balance went up by more than 0.25M<br>
+          <span class="info-badge ib-dec">Decrease</span> Balance went down by more than 0.25M<br>
+          <span class="info-badge ib-nc">No Change</span> Change is within &plusmn;0.25M
+        </div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-header" style="color:#27AE60;">Data Source</div>
+        <div class="info-item-text">
+          Data comes from the <strong>Vendor Balance Comparing</strong> report in Google Sheets, which tracks monthly balances for <strong>772 vendors</strong> across 4 metrics: Vendor Balance, Inventory, Purchase, and COGs.
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Group Breakdown + Movement Analysis -->
