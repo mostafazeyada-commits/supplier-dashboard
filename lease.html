@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lease Breakdown Dashboard - Talabat</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #313131;
+    --blue: #FF5A00;
+    --blue-light: #FF7A2E;
+    --accent: #FFF0E6;
+    --bg: #F0F2F5;
+    --card: #FFFFFF;
+    --green: #27AE60;
+    --red: #E74C3C;
+    --orange: #FF5A00;
+    --gray: #7F8C8D;
+    --text: #313131;
+    --text-light: #95A5A6;
+    --border: #F0E6DE;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .top-nav {
+    background: var(--navy); display: flex; align-items: center; padding: 0 24px; gap: 0;
+  }
+  .top-nav a {
+    color: #fff; text-decoration: none; padding: 10px 24px; font-size: 14px; font-weight: 600;
+    border-bottom: 3px solid transparent; transition: border-color 0.2s;
+  }
+  .top-nav a:hover { border-bottom-color: rgba(255,90,0,0.5); }
+  .top-nav a.active { border-bottom-color: var(--orange); }
+
+  .header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    color: #fff; padding: 28px 40px 22px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: 0.5px; }
+  .header .sub { font-size: 13px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  .filter-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;
+  }
+  .filter-card {
+    background: var(--card); border-radius: 12px; padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .filter-card:nth-child(2) { border-top-color: var(--green); }
+  .filter-card:nth-child(3) { border-top-color: #8E44AD; }
+  .filter-card-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--text-light); display: flex; align-items: center; gap: 6px;
+  }
+  .filter-card-label .f-icon {
+    width: 18px; height: 18px; border-radius: 4px; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 10px; color: #fff;
+  }
+  .filter-card:nth-child(1) .f-icon { background: var(--blue); }
+  .filter-card:nth-child(2) .f-icon { background: var(--green); }
+  .filter-card:nth-child(3) .f-icon { background: #8E44AD; }
+  .filter-card select, .filter-card input {
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-family: inherit; color: var(--text); font-weight: 600;
+    background: #FAFBFC; width: 100%; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .filter-card select:focus, .filter-card input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(255,90,0,0.1); }
+  .filter-card input::placeholder { font-weight: 400; color: var(--text-light); }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--card); border-radius: 12px; padding: 20px 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-top: 3px solid var(--blue); position: relative;
+  }
+  .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-light); margin-bottom: 8px; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1.1; }
+  .kpi-delta { margin-top: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .kpi-delta.up { color: var(--green); }
+  .kpi-delta.down { color: var(--red); }
+  .kpi-delta .period { font-weight: 400; color: var(--text-light); margin-left: 4px; }
+  .kpi-card.count-card { border-top-color: var(--orange); }
+  .kpi-card.count-card .kpi-value { color: var(--blue); }
+
+  .section-title {
+    font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--blue); margin: 28px 0 14px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .icon { width: 20px; height: 20px; background: var(--blue); border-radius: 4px; display: inline-block; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .card { background: var(--card); border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--navy); margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--blue); color: #fff; padding: 10px 12px; text-align: left;
+    font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    cursor: pointer; user-select: none; position: relative;
+  }
+  th:first-child { border-radius: 6px 0 0 0; }
+  th:last-child { border-radius: 0 6px 0 0; }
+  th:hover { background: var(--blue-light); }
+  th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+  th.sorted .sort-arrow { opacity: 1; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #FAFBFC; }
+  tr:last-child td { border-bottom: none; }
+  tr.total-row td { font-weight: 700; background: var(--accent) !important; border-top: 2px solid var(--blue-light); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .center { text-align: center; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge.b-green { background: #E8F8EF; color: var(--green); }
+  .badge.b-orange { background: #FEF3E2; color: #D68910; }
+  .badge.b-red { background: #FDEDED; color: var(--red); }
+  .badge.b-blue { background: #EBF5FB; color: #2980B9; }
+  .badge.b-gray { background: #F0F0F0; color: var(--gray); }
+
+  .chart-wrap { position: relative; height: 280px; margin-top: 8px; }
+  .chart-wrap-lg { position: relative; height: 320px; margin-top: 8px; }
+
+  .vendor-table-wrap { max-height: 600px; overflow-y: auto; border-radius: 0 0 12px 12px; }
+  .vendor-table-wrap::-webkit-scrollbar { width: 6px; }
+  .vendor-table-wrap::-webkit-scrollbar-thumb { background: var(--blue-light); border-radius: 3px; }
+  .vendor-table-wrap table th { position: sticky; top: 0; z-index: 2; }
+  .no-data { text-align: center; padding: 40px; color: var(--text-light); font-size: 14px; }
+
+  .footer { text-align: center; padding: 20px; color: var(--text-light); font-size: 12px; margin-top: 12px; }
+
+  @media print {
+    body { background: #fff; }
+    .container { padding: 0; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+    .filter-row { display: none; }
+    .header, th, .badge, .kpi-card { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+  @media (max-width: 1024px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .filter-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .filter-row { grid-template-columns: 1fr; }
+    .header h1 { font-size: 18px; }
+    .header { padding: 20px 20px 16px; }
+    .container { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="index.html">Supplier Balance</a>
+  <a href="bank.html">Bank Transactions</a>
+  <a href="shrinkage.html">Shrinkage</a>
+  <a href="lease.html" class="active">Lease</a>
+</nav>
+
+<div class="header">
+  <div>
+    <h1>LEASE BREAKDOWN (IFRS 16) DASHBOARD</h1>
+    <div class="sub">Talabat &mdash; Finance &amp; Accounts Payable</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 40" style="height:36px;">
+      <rect width="160" height="40" rx="8" fill="rgba(255,255,255,0.15)"/>
+      <text x="80" y="27" text-anchor="middle" fill="#fff" font-family="'Segoe UI',Tahoma,sans-serif" font-size="20" font-weight="700" letter-spacing="2">talabat</text>
+    </svg>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Filters -->
+  <div class="filter-row">
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">M</span> Month</div>
+      <select id="fMonth">
+        <option value="Apr">April</option>
+        <option value="Jan">January</option>
+        <option value="Feb">February</option>
+        <option value="Mar">March</option>
+      </select>
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">S</span> Contract Search</div>
+      <input id="fSearch" type="text" placeholder="Search contract name...">
+    </div>
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">F</span> Supplier Status</div>
+      <select id="fStatus">
+        <option value="All">All Statuses</option>
+        <option value="All invoices cleared">All Invoices Cleared</option>
+        <option value="Fine - positive">Fine - Positive</option>
+        <option value="Pending">Pending</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row">
+    <div class="kpi-card" id="kpiLiability">
+      <div class="kpi-label">Total Lease Liability (Non-Current)</div>
+      <div class="kpi-value" id="kpiLiabilityVal">--</div>
+      <div class="kpi-delta" id="kpiLiabilityDelta"></div>
+    </div>
+    <div class="kpi-card" id="kpiDepr" style="border-top-color:var(--green);">
+      <div class="kpi-label">Total Depreciation</div>
+      <div class="kpi-value" id="kpiDeprVal">--</div>
+      <div class="kpi-delta" id="kpiDeprDelta"></div>
+    </div>
+    <div class="kpi-card" id="kpiInterest" style="border-top-color:#8E44AD;">
+      <div class="kpi-label">Total Interest Expense</div>
+      <div class="kpi-value" id="kpiInterestVal">--</div>
+      <div class="kpi-delta" id="kpiInterestDelta"></div>
+    </div>
+    <div class="kpi-card count-card">
+      <div class="kpi-label">Active Contracts</div>
+      <div class="kpi-value" id="kpiCountVal">--</div>
+      <div class="kpi-delta" id="kpiCountDelta"></div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="section-title"><span class="icon"></span> Lease Analysis Charts</div>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title">Monthly Lease Liability Trend</div>
+      <div class="chart-wrap"><canvas id="chartLiability"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cost Breakdown by Month</div>
+      <div class="chart-wrap"><canvas id="chartCost"></canvas></div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title">Top 10 Contracts by Liability (Selected Month)</div>
+      <div class="chart-wrap-lg"><canvas id="chartTop10"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Supplier Status Distribution</div>
+      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Contract Detail Table -->
+  <div class="section-title"><span class="icon"></span> Contract Details (Selected Month)</div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="vendor-table-wrap">
+      <table id="tblContracts">
+        <thead>
+          <tr>
+            <th data-col="0">Contract ID <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="1">Asset Name <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="2" class="num">Liability NC <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="3" class="num">Liability Current <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="4" class="num">Depreciation <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="5" class="num">Interest <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="6" class="num">Variable Rental <span class="sort-arrow">&#9650;</span></th>
+          </tr>
+        </thead>
+        <tbody id="tblContractsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Supplier Table -->
+  <div class="section-title"><span class="icon"></span> Landlord Suppliers</div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div class="vendor-table-wrap">
+      <table id="tblSuppliers">
+        <thead>
+          <tr>
+            <th data-col="0">Supplier Code <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="1">Supplier Name <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="2" class="num">Amount <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="3">Status <span class="sort-arrow">&#9650;</span></th>
+            <th data-col="4">Store <span class="sort-arrow">&#9650;</span></th>
+          </tr>
+        </thead>
+        <tbody id="tblSuppliersBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Talabat Finance &amp; Accounts Payable &mdash; Lease Breakdown Dashboard &mdash; Data: Jan&ndash;Apr 2025</div>
+
+<script>
+const MTH = [
+  {month:'Jan', ncCr:116362845, cCr:120465723, accumDepr:4483850, interest:582268, deprBldg:4460855, deprOther:22995, varRental:5435772, count:68},
+  {month:'Feb', ncCr:139459002, cCr:150067330, accumDepr:4630353, interest:0, deprBldg:690355, deprOther:4607358, varRental:6401446, count:72},
+  {month:'Mar', ncCr:156754635, cCr:174789878, accumDepr:4884860, interest:781495, deprBldg:4861866, deprOther:22995, varRental:5902650, count:77},
+  {month:'Apr', ncCr:153925556, cCr:163824514, accumDepr:4723031, interest:718404, deprBldg:4700037, deprOther:22995, varRental:5025236, count:77}
+];
+
+const CONTRACTS = [
+  {id:"500001",name:"DFC - D36 - Dar Wasl -Bldg 5-Sho",ncCr:2555498,cCr:1944694,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500002",name:"DFC - D37 - Dar Wasl -Bldg 5-Sho",ncCr:2277554,cCr:1744936,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500003",name:"DFC -D35 - Dar Wasl -Bldg 5-Shop",ncCr:3028442,cCr:2326982,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500004",name:"DFC-D106 Dar Al Wasl Bldg.5",ncCr:936782,cCr:926782,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500005",name:"DFC-Dar Al Wasl Bldg5-D47-Shop-D",ncCr:1419762,cCr:1088316,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500006",name:"Abu Dhabi Kitchen-Behind Mushrif",ncCr:3218928,cCr:2982500,accumDepr:0,interest:22995,deprBldg:0,varRental:0},
+  {id:"500007",name:"Abu Dhabi Kitchen-Musaffah M-17",ncCr:3127096,cCr:4022076,accumDepr:73762,interest:25870,deprBldg:73762,varRental:0},
+  {id:"500008",name:"Abu Dhabi Kitchen-Musaffah M-37",ncCr:2269164,cCr:2934384,accumDepr:58498,interest:19244,deprBldg:58498,varRental:0},
+  {id:"500009",name:"Ajman Kitchen 2-BIB02",ncCr:1175414,cCr:1254072,accumDepr:24982,interest:12576,deprBldg:24982,varRental:0},
+  {id:"500010",name:"Al Ain Kitchen 1 - BIB01",ncCr:1936044,cCr:1819652,accumDepr:52500,interest:16682,deprBldg:52500,varRental:0},
+  {id:"500011",name:"Al Ain Kitchen 2-B1602",ncCr:3297458,cCr:2832384,accumDepr:95700,interest:27034,deprBldg:95700,varRental:0},
+  {id:"500012",name:"Al Quoz Kitchen - B0901",ncCr:7244568,cCr:7002692,accumDepr:203948,interest:57534,deprBldg:203948,varRental:0},
+  {id:"500013",name:"Arjan Kitchen- B2201",ncCr:2399310,cCr:2399310,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500014",name:"DFC-Dar Al Wasl Bldg5-D44-Shop-D",ncCr:1024174,cCr:827974,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500015",name:"DIP Kitchen 1- B0701",ncCr:3041400,cCr:2844614,accumDepr:76850,interest:25082,deprBldg:76850,varRental:0},
+  {id:"500016",name:"DIP Kitchen 2-B1001",ncCr:2117810,cCr:1948882,accumDepr:57458,interest:16972,deprBldg:57458,varRental:0},
+  {id:"500017",name:"DSO Kitchen - B0801",ncCr:2723414,cCr:2519430,accumDepr:79702,interest:20978,deprBldg:79702,varRental:0},
+  {id:"500018",name:"Dubai Hills Kitchen-B2101",ncCr:3247220,cCr:3247220,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500019",name:"Fujairah Kitchen - B0601",ncCr:2055266,cCr:2159986,accumDepr:37750,interest:18076,deprBldg:37750,varRental:0},
+  {id:"500020",name:"IMPZ Kitchen-B1301",ncCr:2618906,cCr:2531538,accumDepr:55236,interest:22070,deprBldg:55236,varRental:0},
+  {id:"500021",name:"International City Kitchen- B050",ncCr:3135946,cCr:2831930,accumDepr:88750,interest:24888,deprBldg:88750,varRental:0},
+  {id:"500022",name:"JVC Kitchen-B2001",ncCr:2660618,cCr:2660618,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500023",name:"Jebel Ali Kitchen 2 - B0301",ncCr:5281082,cCr:4800116,accumDepr:139432,interest:41764,deprBldg:139432,varRental:0},
+  {id:"500024",name:"Jebel Ali Kitchen 3-B1701",ncCr:3048958,cCr:2756766,accumDepr:92802,interest:23942,deprBldg:92802,varRental:0},
+  {id:"500025",name:"Karama Kitchen-B1501",ncCr:2625376,cCr:2442816,accumDepr:63818,interest:21050,deprBldg:63818,varRental:0},
+  {id:"500026",name:"Motor City Kitchen-B1901",ncCr:1825640,cCr:1825640,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500027",name:"Muhaisnah Kitchen - B0401",ncCr:4152810,cCr:3907006,accumDepr:107850,interest:32990,deprBldg:107850,varRental:0},
+  {id:"500028",name:"Muwaileh Kitchen- B1101",ncCr:2605782,cCr:2411194,accumDepr:73000,interest:20624,deprBldg:73000,varRental:0},
+  {id:"500029",name:"RAK Kitchen - B0201",ncCr:3011720,cCr:2771702,accumDepr:72132,interest:25484,deprBldg:72132,varRental:0},
+  {id:"500030",name:"Sports City Kitchen-B1401",ncCr:2696752,cCr:2616402,accumDepr:63044,interest:22398,deprBldg:63044,varRental:0},
+  {id:"500031",name:"Tilal Kitchen - B0101",ncCr:6199050,cCr:5681488,accumDepr:172900,interest:48534,deprBldg:172900,varRental:0},
+  {id:"500032",name:"UAQ Kitchen-B1201",ncCr:2177102,cCr:2001878,accumDepr:49950,interest:17856,deprBldg:49950,varRental:0},
+  {id:"500033",name:"Warehouse 1 - (Dubai) (Office an",ncCr:6577478,cCr:6082090,accumDepr:184152,interest:54072,deprBldg:184152,varRental:0},
+  {id:"500034",name:"Warehouse 1 - (Dubai) Kitchen ar",ncCr:4199488,cCr:3972474,accumDepr:95456,interest:35640,deprBldg:95456,varRental:0},
+  {id:"500035",name:"Warehouse 2 - Abu Dhabi Kitchen",ncCr:3587746,cCr:3305882,accumDepr:97900,interest:28810,deprBldg:97900,varRental:0},
+  {id:"500036",name:"Warehouse 2 Abu Dhabi (Office an",ncCr:3252046,cCr:3164994,accumDepr:68380,interest:27194,deprBldg:68380,varRental:0},
+  {id:"500037",name:"Abu Dhabi Kitchen-Musaffah M-17(",ncCr:869310,cCr:869310,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500038",name:"Abu Dhabi Kitchen-Musaffah M-37(",ncCr:662434,cCr:662434,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500039",name:"Ajman Kitchen 2-BIB02(equip)",ncCr:282984,cCr:282984,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500040",name:"Al Ain Kitchen 1 - BIB01(equip)",ncCr:558274,cCr:558274,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500041",name:"Al Ain Kitchen 2-B1602(equip)",ncCr:766928,cCr:766928,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500042",name:"Al Quoz Kitchen - B0901(equip)",ncCr:2199530,cCr:2199530,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500043",name:"DIP Kitchen 1- B0701(equip)",ncCr:1156890,cCr:1156890,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500044",name:"DIP Kitchen 2-B1001(equip)",ncCr:631506,cCr:631506,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500045",name:"DSO Kitchen - B0801(equip)",ncCr:679720,cCr:679720,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500046",name:"Fujairah Kitchen - B0601(equip)",ncCr:567040,cCr:567040,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500047",name:"IMPZ Kitchen-B1301(equip)",ncCr:724298,cCr:724298,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500048",name:"International City Kitchen- B050",ncCr:870994,cCr:870994,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500049",name:"Jebel Ali Kitchen 2 - B0301(equi",ncCr:1601024,cCr:1601024,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500050",name:"Jebel Ali Kitchen 3-B1701(equip)",ncCr:720090,cCr:720090,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500051",name:"Karama Kitchen-B1501(equip)",ncCr:539216,cCr:539216,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500052",name:"Muhaisnah Kitchen - B0401(equip)",ncCr:1302702,cCr:1302702,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500053",name:"Muwaileh Kitchen- B1101(equip)",ncCr:639382,cCr:639382,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500054",name:"RAK Kitchen - B0201(equip)",ncCr:949286,cCr:949286,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500055",name:"Sports City Kitchen-B1401(equip)",ncCr:673260,cCr:673260,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500056",name:"Tilal Kitchen - B0101(equip)",ncCr:1850296,cCr:1850296,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500057",name:"UAQ Kitchen-B1201(equip)",ncCr:490782,cCr:490782,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500058",name:"Warehouse 1 - (Dubai) (Office an",ncCr:1654038,cCr:1654038,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500059",name:"Warehouse 1 - (Dubai) Kitchen ar",ncCr:1272518,cCr:1272518,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500060",name:"Warehouse 2 - Abu Dhabi Kitchen(",ncCr:1010178,cCr:1010178,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500061",name:"Warehouse 2 Abu Dhabi (Office an",ncCr:684538,cCr:684538,accumDepr:0,interest:0,deprBldg:0,varRental:0},
+  {id:"500062",name:"DFC - D36 - Dar Wasl -Bldg 5-Var",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:398610},
+  {id:"500063",name:"DFC - D37 - Dar Wasl -Bldg 5-Var",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:332175},
+  {id:"500064",name:"DFC -D35 - Dar Wasl -Bldg 5-Vari",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:398610},
+  {id:"500065",name:"DFC-D106 Dar Al Wasl Bldg.5 Vari",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:332175},
+  {id:"500066",name:"DFC-Dar Al Wasl Bldg5-D44-Variab",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:332175},
+  {id:"500067",name:"DFC-Dar Al Wasl Bldg5-D47-Variab",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:332175},
+  {id:"500068",name:"Al Quoz Kitchen - B0901(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:378364},
+  {id:"500069",name:"DIP Kitchen 1- B0701(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:203538},
+  {id:"500070",name:"Jebel Ali Kitchen 2 - B0301(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:305307},
+  {id:"500071",name:"Muhaisnah Kitchen - B0401(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:275276},
+  {id:"500072",name:"Tilal Kitchen - B0101(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:305307},
+  {id:"500073",name:"Warehouse 1 - (Dubai) (Office)(v",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:305307},
+  {id:"500074",name:"Warehouse 1 - (Dubai) Kitchen(va",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:184891},
+  {id:"500075",name:"Warehouse 2 - Abu Dhabi Kitchen(",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:218663},
+  {id:"500076",name:"Warehouse 2 Abu Dhabi (Office)(v",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:218663},
+  {id:"500077",name:"Al Ain Kitchen 2-B1602(var)",ncCr:0,cCr:0,accumDepr:0,interest:0,deprBldg:0,varRental:203999}
+];
+
+const SUPPLIERS = [
+  {code:"200159",name:"AHMED SAIF AL SUWAIDI",amount:6401446,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200159",name:"AHMED SAIF AL SUWAIDI",amount:5025236,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200159",name:"AHMED SAIF AL SUWAIDI",amount:5435772,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200159",name:"AHMED SAIF AL SUWAIDI",amount:5902650,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200174",name:"AL AIN DISTRIBUTION COMPANY (AGTHIA) PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200218",name:"NRTC FRESH LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200220",name:"ABUISSA HOLDING GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200295",name:"YASSER ALSAYED MUKHTAR EST.",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200300",name:"AL SAQER ALDHAHABI TRADING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200348",name:"ARABIAN ETHICALS CO.",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200374",name:"AL AIN AHLIA INSURANCE CO. P.S.C",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200404",name:"AL HOSN GAS",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200430",name:"GHASSAN ABUDAYYEH CONTRACTING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200442",name:"AL NABOODAH CONTRACTING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200447",name:"POWERTEK ENGINEERING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200455",name:"FIVE CONTINENTS PEST CTRL SER LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200465",name:"EROS ELECTRICAL ENGINEERING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200479",name:"SYNERGY FACILITY MANAGEMENT SERVICES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200483",name:"AL HOSN GAS",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200490",name:"ALDAR PROPERTIES PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200503",name:"ABU DHABI TERMINALS PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200505",name:"FUR TRANSPORT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200553",name:"DULSCO LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200555",name:"BANIYAS INVESTMENT & DEV. CO. LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200570",name:"HALA SUPPLY SERVICES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200578",name:"NATIONAL CENTRAL COOLING COMPANY PJSC - TABREED",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200601",name:"PRESTIGE INTERNATIONAL FREIGHT SERVICES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200607",name:"AJMAN SEWERAGE (PRIVATE) COMPANY LIMITED",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200625",name:"TECHNO CAST PRECAST L.L.C",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200636",name:"PRECISION GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200650",name:"DUBAI INVESTMENTS PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200651",name:"EMAAR PROPERTIES PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200657",name:"ITHRA ABU DHABI (SPARKLE) LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200658",name:"AL RAMZ CORPORATION INVESTMENT AND DEVELOPMENT PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200670",name:"IMDAAD LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200693",name:"MERAAS DEVELOPMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200694",name:"SOBHA REALTY LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200700",name:"WASL ASSET MANAGEMENT GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200708",name:"NATIONAL BONDS CORPORATION PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200726",name:"MAJID AL FUTTAIM PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200733",name:"THE KANOO GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200741",name:"AL GHURAIR REAL ESTATE LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200746",name:"UNITED AL SAQER GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200747",name:"JUMEIRAH GOLF ESTATES",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200748",name:"TILAL AL GHAF COMMUNITY MANAGEMENT",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200765",name:"ABU DHABI NATIONAL ENERGY COMPANY PJSC - TAQA",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200770",name:"ARADA DEVELOPMENTS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200775",name:"SHARJAH HOLDING SRPC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200776",name:"MUBADALA INVESTMENT COMPANY PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200780",name:"AZIZI DEVELOPMENTS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200785",name:"DAMAC PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200802",name:"NAKHEEL PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200820",name:"AL MASAH CAPITAL LIMITED",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200838",name:"BLOOM HOLDING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200849",name:"REPORTAGE PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200900",name:"EAGLE HILLS PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200908",name:"BINGHATTI DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"200975",name:"UNION PROPERTIES PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201013",name:"TECOM GROUP PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201024",name:"ALEF GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201031",name:"AL HABTOOR GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201032",name:"DEYAAR DEVELOPMENT PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201040",name:"OMNIYAT GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201050",name:"TAMOUH INVESTMENTS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201062",name:"REEM DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201075",name:"SELECT GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201100",name:"DANUBE PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201114",name:"IMKAN PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201120",name:"PALMA HOLDING LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201139",name:"AL MARJAN ISLAND LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201140",name:"RAK PROPERTIES PJSC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201155",name:"TIGER GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201160",name:"SAMANA DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201170",name:"MAG GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201178",name:"ELLINGTON PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201185",name:"MODON PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201190",name:"CREDO REAL ESTATE LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201200",name:"DUBAI SOUTH LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201215",name:"PRESTIGE ONE DEVELOPMENTS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201220",name:"VINCITORE REAL ESTATE DEVELOPMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201230",name:"SEVEN TIDES INTERNATIONAL LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201243",name:"AL THURIAH GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201250",name:"OBG GROUP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201260",name:"AQUA PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201268",name:"Q PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201274",name:"GEMZ DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201280",name:"MERAKI DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201290",name:"AZAM REAL ESTATE LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201300",name:"REFINE DEVELOPMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201310",name:"IMAN DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201318",name:"LA VIE DEVELOPERS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201326",name:"DRIVEN PROPERTIES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201335",name:"PANTHEON DEVELOPMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201340",name:"KHIDMAH LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201348",name:"STRATUM OWNER ASSOCIATION MGMT",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201355",name:"PROVIS ESTATE MANAGEMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201360",name:"ASTECO PROPERTY MANAGEMENT LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201370",name:"BETTER HOMES LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201378",name:"ALLSOPP & ALLSOPP LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201385",name:"CLUTTONS LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"},
+  {code:"201390",name:"SAVILLS (MIDDLE EAST) LLC",amount:0,status:"All invoices cleared",store:"FZ-LLC"}
+];
+
+function fmt(n){ return n===0?'-':Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtShort(n){
+  if(n===0) return '-';
+  const abs=Math.abs(n);
+  if(abs>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(abs>=1e3) return (n/1e3).toFixed(0)+'K';
+  return n.toLocaleString();
+}
+
+const fMonth=document.getElementById('fMonth');
+const fSearch=document.getElementById('fSearch');
+const fStatus=document.getElementById('fStatus');
+
+function getMonthData(m){ return MTH.find(d=>d.month===m); }
+function getPrevMonth(m){ const idx=MTH.findIndex(d=>d.month===m); return idx>0?MTH[idx-1]:null; }
+
+function deltaHtml(cur,prev,label){
+  if(!prev) return '';
+  const diff=cur-prev;
+  if(diff===0) return '';
+  const pct=prev!==0?((diff/prev)*100).toFixed(1):'--';
+  const cls=diff>0?'up':'down';
+  const arrow=diff>0?'&#9650;':'&#9660;';
+  return `<div class="kpi-delta ${cls}">${arrow} ${fmtShort(Math.abs(diff))} (${pct}%)<span class="period">vs ${label}</span></div>`;
+}
+
+function updateKPIs(){
+  const m=fMonth.value;
+  const d=getMonthData(m);
+  const p=getPrevMonth(m);
+  document.getElementById('kpiLiabilityVal').textContent=fmtShort(d.ncCr);
+  document.getElementById('kpiDeprVal').textContent=fmtShort(d.accumDepr);
+  document.getElementById('kpiInterestVal').textContent=fmtShort(d.interest);
+  document.getElementById('kpiCountVal').textContent=d.count;
+  document.getElementById('kpiLiabilityDelta').innerHTML=p?deltaHtml(d.ncCr,p.ncCr,p.month):'';
+  document.getElementById('kpiDeprDelta').innerHTML=p?deltaHtml(d.accumDepr,p.accumDepr,p.month):'';
+  document.getElementById('kpiInterestDelta').innerHTML=p?deltaHtml(d.interest,p.interest,p.month):'';
+  document.getElementById('kpiCountDelta').innerHTML=p?deltaHtml(d.count,p.count,p.month):'';
+}
+
+let chartLiability, chartCost, chartTop10, chartStatus;
+const months=MTH.map(d=>d.month);
+const pal=['#FF5A00','#FF7A2E','#FFA559','#313131','#27AE60','#E74C3C','#8E44AD','#3498DB','#F39C12','#1ABC9C'];
+
+function buildCharts(){
+  const ctx1=document.getElementById('chartLiability').getContext('2d');
+  chartLiability=new Chart(ctx1,{
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Non-Current Liability',data:MTH.map(d=>d.ncCr),backgroundColor:'#FF5A00',borderRadius:4},
+        {label:'Current Liability',data:MTH.map(d=>d.cCr),backgroundColor:'#FF7A2E',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>fmtShort(v)},grid:{color:'#F0E6DE'}},x:{grid:{display:false}}}
+    }
+  });
+
+  const ctx2=document.getElementById('chartCost').getContext('2d');
+  chartCost=new Chart(ctx2,{
+    type:'bar',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Depreciation',data:MTH.map(d=>d.accumDepr),backgroundColor:'#27AE60',borderRadius:4},
+        {label:'Interest',data:MTH.map(d=>d.interest),backgroundColor:'#8E44AD',borderRadius:4},
+        {label:'Variable Rental',data:MTH.map(d=>d.varRental),backgroundColor:'#3498DB',borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{y:{stacked:true,ticks:{callback:v=>fmtShort(v)},grid:{color:'#F0E6DE'}},x:{stacked:true,grid:{display:false}}}
+    }
+  });
+
+  updateTop10Chart();
+  updateStatusChart();
+}
+
+function updateTop10Chart(){
+  const sorted=[...CONTRACTS].sort((a,b)=>b.ncCr-a.ncCr).slice(0,10);
+  const ctx3=document.getElementById('chartTop10').getContext('2d');
+  if(chartTop10) chartTop10.destroy();
+  chartTop10=new Chart(ctx3,{
+    type:'bar',
+    data:{
+      labels:sorted.map(c=>c.name.substring(0,25)+(c.name.length>25?'...':'')),
+      datasets:[{label:'Non-Current Liability',data:sorted.map(c=>c.ncCr),backgroundColor:pal.slice(0,10),borderRadius:4}]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>fmtShort(v)},grid:{color:'#F0E6DE'}},y:{grid:{display:false},ticks:{font:{size:10}}}}
+    }
+  });
+}
+
+function updateStatusChart(){
+  const statusCounts={};
+  const filteredSup=getFilteredSuppliers();
+  filteredSup.forEach(s=>{statusCounts[s.status]=(statusCounts[s.status]||0)+1;});
+  const labels=Object.keys(statusCounts);
+  const data=Object.values(statusCounts);
+  const colors=['#27AE60','#FF5A00','#E74C3C','#3498DB','#8E44AD','#F39C12'];
+  const ctx4=document.getElementById('chartStatus').getContext('2d');
+  if(chartStatus) chartStatus.destroy();
+  chartStatus=new Chart(ctx4,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}}}
+    }
+  });
+}
+
+function getFilteredContracts(){
+  const search=fSearch.value.toLowerCase();
+  return CONTRACTS.filter(c=>{
+    if(search && !c.name.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+function getFilteredSuppliers(){
+  const status=fStatus.value;
+  return SUPPLIERS.filter(s=>{
+    if(status!=='All' && s.status!==status) return false;
+    return true;
+  });
+}
+
+let contractSortCol=2, contractSortAsc=false;
+let supplierSortCol=2, supplierSortAsc=false;
+
+function renderContractTable(){
+  const rows=getFilteredContracts();
+  const keys=['id','name','ncCr','cCr','accumDepr','interest','varRental'];
+  rows.sort((a,b)=>{
+    const k=keys[contractSortCol];
+    let va=a[k], vb=b[k];
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    if(va<vb) return contractSortAsc?-1:1;
+    if(va>vb) return contractSortAsc?1:-1;
+    return 0;
+  });
+
+  const totals={ncCr:0,cCr:0,accumDepr:0,interest:0,varRental:0};
+  rows.forEach(r=>{totals.ncCr+=r.ncCr;totals.cCr+=r.cCr;totals.accumDepr+=r.accumDepr;totals.interest+=r.interest;totals.varRental+=r.varRental;});
+
+  let html='';
+  rows.forEach(r=>{
+    html+=`<tr>
+      <td>${r.id}</td>
+      <td>${r.name}</td>
+      <td class="num">${fmt(r.ncCr)}</td>
+      <td class="num">${fmt(r.cCr)}</td>
+      <td class="num">${fmt(r.accumDepr)}</td>
+      <td class="num">${fmt(r.interest)}</td>
+      <td class="num">${fmt(r.varRental)}</td>
+    </tr>`;
+  });
+  html+=`<tr class="total-row">
+    <td colspan="2">Total (${rows.length} contracts)</td>
+    <td class="num">${fmt(totals.ncCr)}</td>
+    <td class="num">${fmt(totals.cCr)}</td>
+    <td class="num">${fmt(totals.accumDepr)}</td>
+    <td class="num">${fmt(totals.interest)}</td>
+    <td class="num">${fmt(totals.varRental)}</td>
+  </tr>`;
+  document.getElementById('tblContractsBody').innerHTML=html;
+
+  document.querySelectorAll('#tblContracts th').forEach(th=>{
+    const col=+th.dataset.col;
+    th.classList.toggle('sorted',col===contractSortCol);
+    th.querySelector('.sort-arrow').innerHTML=col===contractSortCol?(contractSortAsc?'&#9650;':'&#9660;'):'&#9650;';
+  });
+}
+
+function renderSupplierTable(){
+  const rows=getFilteredSuppliers();
+  const keys=['code','name','amount','status','store'];
+  rows.sort((a,b)=>{
+    const k=keys[supplierSortCol];
+    let va=a[k], vb=b[k];
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    if(va<vb) return supplierSortAsc?-1:1;
+    if(va>vb) return supplierSortAsc?1:-1;
+    return 0;
+  });
+
+  function statusBadge(s){
+    if(s==='All invoices cleared') return '<span class="badge b-green">All Invoices Cleared</span>';
+    if(s==='Fine - positive') return '<span class="badge b-blue">Fine - Positive</span>';
+    if(s==='Pending') return '<span class="badge b-orange">Pending</span>';
+    return '<span class="badge b-gray">'+s+'</span>';
+  }
+
+  let html='';
+  rows.forEach(r=>{
+    html+=`<tr>
+      <td>${r.code}</td>
+      <td>${r.name}</td>
+      <td class="num">${fmt(r.amount)}</td>
+      <td class="center">${statusBadge(r.status)}</td>
+      <td>${r.store}</td>
+    </tr>`;
+  });
+  if(rows.length===0) html='<tr><td colspan="5" class="no-data">No suppliers match the selected filter.</td></tr>';
+  document.getElementById('tblSuppliersBody').innerHTML=html;
+
+  document.querySelectorAll('#tblSuppliers th').forEach(th=>{
+    const col=+th.dataset.col;
+    th.classList.toggle('sorted',col===supplierSortCol);
+    th.querySelector('.sort-arrow').innerHTML=col===supplierSortCol?(supplierSortAsc?'&#9650;':'&#9660;'):'&#9650;';
+  });
+}
+
+document.querySelectorAll('#tblContracts th').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col=+th.dataset.col;
+    if(contractSortCol===col) contractSortAsc=!contractSortAsc;
+    else { contractSortCol=col; contractSortAsc=col<2; }
+    renderContractTable();
+  });
+});
+
+document.querySelectorAll('#tblSuppliers th').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col=+th.dataset.col;
+    if(supplierSortCol===col) supplierSortAsc=!supplierSortAsc;
+    else { supplierSortCol=col; supplierSortAsc=col<2; }
+    renderSupplierTable();
+  });
+});
+
+fMonth.addEventListener('change',()=>{ updateKPIs(); });
+fSearch.addEventListener('input',()=>{ renderContractTable(); updateTop10Chart(); });
+fStatus.addEventListener('change',()=>{ renderSupplierTable(); updateStatusChart(); });
+
+updateKPIs();
+buildCharts();
+renderContractTable();
+renderSupplierTable();
+</script>
+</body>
+</html>
