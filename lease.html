@@ -45,7 +45,7 @@
   .container { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
 
   .filter-row {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;
   }
   .filter-card {
     background: var(--card); border-radius: 12px; padding: 16px 20px;
@@ -53,7 +53,6 @@
     display: flex; flex-direction: column; gap: 8px;
   }
   .filter-card:nth-child(2) { border-top-color: var(--green); }
-  .filter-card:nth-child(3) { border-top-color: #8E44AD; }
   .filter-card-label {
     font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
     color: var(--text-light); display: flex; align-items: center; gap: 6px;
@@ -193,15 +192,6 @@
       <div class="filter-card-label"><span class="f-icon">S</span> Contract Search</div>
       <input id="fSearch" type="text" placeholder="Search contract name...">
     </div>
-    <div class="filter-card">
-      <div class="filter-card-label"><span class="f-icon">F</span> Supplier Status</div>
-      <select id="fStatus">
-        <option value="All">All Statuses</option>
-        <option value="All invoices cleared">All Invoices Cleared</option>
-        <option value="Fine - positive">Fine - Positive</option>
-        <option value="Pending">Pending</option>
-      </select>
-    </div>
   </div>
 
   <!-- KPI Cards -->
@@ -246,8 +236,8 @@
       <div class="chart-wrap-lg"><canvas id="chartTop10"></canvas></div>
     </div>
     <div class="card">
-      <div class="card-title">Supplier Status Distribution</div>
-      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+      <div class="card-title">Supplier Status Overview</div>
+      <div class="chart-wrap"><canvas id="chartStatusOverview"></canvas></div>
     </div>
   </div>
 
@@ -272,8 +262,30 @@
     </div>
   </div>
 
-  <!-- Supplier Table -->
+  <!-- Supplier Section -->
   <div class="section-title"><span class="icon"></span> Landlord Suppliers</div>
+  <div class="filter-row" style="grid-template-columns:1fr 1fr;">
+    <div class="filter-card">
+      <div class="filter-card-label"><span class="f-icon">F</span> Supplier Status</div>
+      <select id="fSupStatus">
+        <option value="All">All Statuses</option>
+      </select>
+    </div>
+    <div class="filter-card" style="border-top-color:var(--green);">
+      <div class="filter-card-label"><span class="f-icon" style="background:var(--green);">N</span> Supplier Name</div>
+      <input id="fSupName" type="text" placeholder="Search supplier name...">
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="card-title">Supplier Amount Distribution (Top 10)</div>
+      <div class="chart-wrap-lg"><canvas id="chartSupPie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Supplier Status Breakdown</div>
+      <div class="chart-wrap-lg"><canvas id="chartSupStatus"></canvas></div>
+    </div>
+  </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div class="vendor-table-wrap">
       <table id="tblSuppliers">
@@ -498,7 +510,6 @@ function fmtShort(n){
 
 const fMonth=document.getElementById('fMonth');
 const fSearch=document.getElementById('fSearch');
-const fStatus=document.getElementById('fStatus');
 
 function getMonthData(m){ return MTH.find(d=>d.month===m); }
 function getPrevMonth(m){ const idx=MTH.findIndex(d=>d.month===m); return idx>0?MTH[idx-1]:null; }
@@ -527,7 +538,7 @@ function updateKPIs(){
   document.getElementById('kpiCountDelta').innerHTML=p?deltaHtml(d.count,p.count,p.month):'';
 }
 
-let chartLiability, chartCost, chartTop10, chartStatus;
+let chartLiability, chartCost, chartTop10, chartStatusOverview, chartSupPie, chartSupStatus;
 const months=MTH.map(d=>d.month);
 const pal=['#FF5A00','#FF7A2E','#FFA559','#313131','#27AE60','#E74C3C','#8E44AD','#3498DB','#F39C12','#1ABC9C'];
 
@@ -568,7 +579,7 @@ function buildCharts(){
   });
 
   updateTop10Chart();
-  updateStatusChart();
+  buildStatusOverviewChart();
 }
 
 function updateTop10Chart(){
@@ -589,21 +600,68 @@ function updateTop10Chart(){
   });
 }
 
-function updateStatusChart(){
+function buildStatusOverviewChart(){
   const statusCounts={};
-  const filteredSup=getFilteredSuppliers();
-  filteredSup.forEach(s=>{statusCounts[s.status]=(statusCounts[s.status]||0)+1;});
+  SUPPLIERS.forEach(s=>{statusCounts[s.status]=(statusCounts[s.status]||0)+1;});
   const labels=Object.keys(statusCounts);
   const data=Object.values(statusCounts);
   const colors=['#27AE60','#FF5A00','#E74C3C','#3498DB','#8E44AD','#F39C12'];
-  const ctx4=document.getElementById('chartStatus').getContext('2d');
-  if(chartStatus) chartStatus.destroy();
-  chartStatus=new Chart(ctx4,{
+  const ctx=document.getElementById('chartStatusOverview').getContext('2d');
+  if(chartStatusOverview) chartStatusOverview.destroy();
+  chartStatusOverview=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}}}
+    }
+  });
+}
+
+function updateSupplierPieChart(){
+  const rows=getFilteredSuppliers();
+  const nameMap={};
+  rows.forEach(r=>{nameMap[r.name]=(nameMap[r.name]||0)+r.amount;});
+  const entries=Object.entries(nameMap).sort((a,b)=>b[1]-a[1]);
+  const top=entries.filter(e=>e[1]>0).slice(0,10);
+  const othersSum=entries.filter(e=>e[1]>0).slice(10).reduce((s,e)=>s+e[1],0);
+  const labels=top.map(e=>e[0].substring(0,25)+(e[0].length>25?'...':''));
+  const data=top.map(e=>e[1]);
+  if(othersSum>0){labels.push('Others');data.push(othersSum);}
+  const colors=['#FF5A00','#27AE60','#3498DB','#8E44AD','#F39C12','#E74C3C','#1ABC9C','#D35400','#2C3E50','#7D3C98','#95A5A6'];
+  const ctx=document.getElementById('chartSupPie').getContext('2d');
+  if(chartSupPie) chartSupPie.destroy();
+  if(data.length===0){
+    chartSupPie=new Chart(ctx,{type:'pie',data:{labels:['No data'],datasets:[{data:[1],backgroundColor:['#F0F0F0']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    return;
+  }
+  chartSupPie=new Chart(ctx,{
+    type:'pie',
+    data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},
+        tooltip:{callbacks:{label:function(c){return c.label+': '+fmtShort(c.raw);}}}}
+    }
+  });
+}
+
+function updateSupplierStatusChart(){
+  const rows=getFilteredSuppliers();
+  const statusAmounts={};
+  rows.forEach(r=>{statusAmounts[r.status]=(statusAmounts[r.status]||0)+r.amount;});
+  const labels=Object.keys(statusAmounts);
+  const data=Object.values(statusAmounts);
+  const colors=['#27AE60','#FF5A00','#E74C3C','#3498DB','#8E44AD','#F39C12'];
+  const ctx=document.getElementById('chartSupStatus').getContext('2d');
+  if(chartSupStatus) chartSupStatus.destroy();
+  chartSupStatus=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors.slice(0,labels.length),borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:12}},
+        tooltip:{callbacks:{label:function(c){return c.label+': '+fmtShort(c.raw);}}}}
     }
   });
 }
@@ -616,10 +674,20 @@ function getFilteredContracts(){
   });
 }
 
+const fSupStatus=document.getElementById('fSupStatus');
+const fSupName=document.getElementById('fSupName');
+
+(function populateSupStatusFilter(){
+  const statuses=[...new Set(SUPPLIERS.map(s=>s.status))];
+  statuses.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;fSupStatus.appendChild(o);});
+})();
+
 function getFilteredSuppliers(){
-  const status=fStatus.value;
+  const status=fSupStatus.value;
+  const nameQ=fSupName.value.toLowerCase();
   return SUPPLIERS.filter(s=>{
     if(status!=='All' && s.status!==status) return false;
+    if(nameQ && !s.name.toLowerCase().includes(nameQ)) return false;
     return true;
   });
 }
@@ -732,12 +800,15 @@ document.querySelectorAll('#tblSuppliers th').forEach(th=>{
 
 fMonth.addEventListener('change',()=>{ updateKPIs(); });
 fSearch.addEventListener('input',()=>{ renderContractTable(); updateTop10Chart(); });
-fStatus.addEventListener('change',()=>{ renderSupplierTable(); updateStatusChart(); });
+fSupStatus.addEventListener('change',()=>{ renderSupplierTable(); updateSupplierPieChart(); updateSupplierStatusChart(); });
+fSupName.addEventListener('input',()=>{ renderSupplierTable(); updateSupplierPieChart(); updateSupplierStatusChart(); });
 
 updateKPIs();
 buildCharts();
 renderContractTable();
 renderSupplierTable();
+updateSupplierPieChart();
+updateSupplierStatusChart();
 </script>
 </body>
 </html>
