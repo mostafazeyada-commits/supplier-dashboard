@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shrinkage Dashboard</title>
+<style>
+  :root {
+    --navy: #313131;
+    --orange: #FF5A00;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  .top-nav {
+    background: var(--navy); display: flex; align-items: center; padding: 0 24px; gap: 0; flex-shrink: 0;
+  }
+  .top-nav a {
+    color: #fff; text-decoration: none; padding: 10px 24px; font-size: 14px; font-weight: 600;
+    border-bottom: 3px solid transparent; transition: border-color 0.2s;
+  }
+  .top-nav a:hover { border-bottom-color: rgba(255,90,0,0.5); }
+  .top-nav a.active { border-bottom-color: var(--orange); }
+  iframe { flex: 1; border: none; width: 100%; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="index.html">Supplier Balance</a>
+  <a href="bank.html">Bank Transactions</a>
+  <a href="shrinkage.html" class="active">Shrinkage</a>
+  <a href="lease.html">Lease</a>
+</nav>
+
+<iframe src="https://adelhamamsy.github.io/Shrinkage-Dashboard/" allowfullscreen></iframe>
+
+</body>
+</html>
